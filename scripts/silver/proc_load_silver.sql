@@ -1,3 +1,16 @@
+/*
+	# ============================================================================ #
+		Stored Procedure: Load silver layer
+	# ============================================================================ #
+
+	Script Purpose: This script performs truncation, transformaiton and a insert operation to created tables utilizing source tables of bronze layer.
+		
+	Usage Example:
+	- EXEC bronze.load_silver;
+
+	WARNING: This script will truncate the target tables before loading data, which will cause loss of existing data in those tables.
+*/
+
 CREATE OR ALTER PROCEDURE silver.load_silver AS
 BEGIN
     DECLARE @start_time DATETIME, @end_time DATETIME, @batch_start_time DATETIME, @batch_end_time DATETIME; 
@@ -119,15 +132,15 @@ BEGIN
 		sls_prd_key,
 		sls_cust_id,
 		CASE	-- Validated dates to prevent out of range or future date inserts.
-			WHEN sls_order_dt IS NULL OR sls_order_dt <= 19000000 OR CAST(CAST(sls_order_dt AS VARCHAR) AS DATE) >= GETDATE() THEN NULL
+			WHEN sls_order_dt IS NULL OR sls_order_dt <= 19000000 OR CAST(CAST(sls_order_dt AS VARCHAR) AS DATE) >= CAST(GETDATE() AS DATE) THEN NULL
 			ELSE CAST(CAST(sls_order_dt AS VARCHAR) AS DATE)
 		END AS sls_order_dt,
 		CASE
-			WHEN sls_ship_dt IS NULL OR sls_ship_dt <= 19000000 OR CAST(CAST(sls_ship_dt AS VARCHAR) AS DATE) >= GETDATE() THEN NULL
+			WHEN sls_ship_dt IS NULL OR sls_ship_dt <= 19000000 OR CAST(CAST(sls_ship_dt AS VARCHAR) AS DATE) >= CAST(GETDATE() AS DATE) THEN NULL
 			ELSE CAST(CAST(sls_ship_dt AS VARCHAR) AS DATE)
 		END AS sls_ship_dt,
 		CASE
-			WHEN sls_due_dt IS NULL OR sls_due_dt <= 19000000 OR CAST(CAST(sls_due_dt AS VARCHAR) AS DATE) >= GETDATE() THEN NULL
+			WHEN sls_due_dt IS NULL OR sls_due_dt <= 19000000 OR CAST(CAST(sls_due_dt AS VARCHAR) AS DATE) >= CAST(GETDATE() AS DATE) THEN NULL
 			ELSE CAST(CAST(sls_due_dt AS VARCHAR) AS DATE)
 		END AS sls_due_dt,
 		CASE	-- Derived sales amount with (unit price x quantity) formula where the original value is NULL or less than or equal to zero.
@@ -136,8 +149,8 @@ BEGIN
 		END AS sls_sales,
 		ABS(ISNULL(sls_quantity,1)) AS sls_quantity, -- Avoided zero, negative and null quantity value.
 		CASE	-- Derived price value with (total sales price / quantity) formula where the original value is NULL, zero, or negative.
-			WHEN (sls_price IS NULL OR sls_price = 0) AND (sls_quantity IS NOT NULL AND sls_quantity != 0) THEN sls_sales / sls_quantity
-			WHEN sls_price < 0 THEN ABS(sls_price)
+			WHEN (sls_price IS NULL OR sls_price = 0) AND (sls_quantity IS NOT NULL AND sls_quantity != 0) AND (sls_sales IS NOT NULL) THEN sls_sales / sls_quantity
+			WHEN sls_price < 0 THEN ABS(sls_price) -- Converted negative value to positive with absolute function.
 			ELSE sls_price
 		END AS sls_price
 	FROM
@@ -151,10 +164,108 @@ BEGIN
 	PRINT 'Loading ERP Tables';
 	PRINT '------------------------------------------------';
 
+	-- Loading silver.erp_cust_az12
+    SET @start_time = GETDATE();
+	PRINT '>> Truncating Table: silver.erp_cust_az12';
+	TRUNCATE TABLE silver.erp_cust_az12;
+	PRINT '>> Inserting Data Into: silver.erp_cust_az12';
+
+	INSERT INTO silver.erp_cust_az12(
+		cid,
+		bdate,
+		gen
+	)
+	SELECT
+		CASE								-- Remove 'NAS' prefix
+			WHEN cid LIKE 'NAS%' THEN SUBSTRING(cid, 4, LEN(cid)) 
+			ELSE cid
+		END AS cid, 
+		CASE								-- Set future and out-of-range birthday dates to NULL.
+			WHEN (bdate < '1900-01-01' OR (bdate > DATEADD( YEAR, -18, GETDATE() ))) THEN NULL
+			ELSE bdate
+		END AS bdate,
+		CASE UPPER(TRIM(COALESCE(gen,'')))	-- Replace gender values
+			WHEN '' THEN 'n/a'
+			WHEN 'F' THEN 'Female'
+			WHEN 'M' THEN 'Male'
+			ELSE gen
+		END AS gen
+	FROM
+		bronze.erp_cust_az12
+
+	SET @end_time = GETDATE();
+    PRINT '>> Load Duration: ' + CAST(DATEDIFF(SECOND, @start_time, @end_time) AS NVARCHAR) + ' seconds';
+    PRINT '>> -------------';
+
+
+	-- Loading silver.erp_loc_a101
+    SET @start_time = GETDATE();
+	PRINT '>> Truncating Table: silver.erp_loc_a101';
+	TRUNCATE TABLE silver.erp_loc_a101;
+	PRINT '>> Inserting Data Into: silver.erp_loc_a101';
+
+	INSERT INTO silver.erp_loc_a101(
+		cid,
+		cntry
+	)
+	SELECT
+		REPLACE(cid,'-','') AS cid,				-- Remove dash character from id.
+		CASE TRIM(UPPER(COALESCE(cntry, '')))	-- Normalize and handle missing or blank country codes.
+			WHEN 'US' THEN 'United States'
+			WHEN 'USA' THEN 'United States'
+			WHEN 'DE' THEN 'Germany'
+			WHEN 'AU' THEN 'Australia'
+			WHEN 'AUS' THEN 'Australia'
+			WHEN 'CA' THEN 'Canada'
+			WHEN 'CAN' THEN 'Canada'
+			WHEN 'FR' THEN 'France'
+			WHEN 'UK' THEN 'United Kingdom'
+			WHEN '' THEN 'n/a'
+			ELSE TRIM(cntry)
+		END AS cntry
+	FROM
+		bronze.erp_loc_a101
+
+	SET @end_time = GETDATE();
+    PRINT '>> Load Duration: ' + CAST(DATEDIFF(SECOND, @start_time, @end_time) AS NVARCHAR) + ' seconds';
+    PRINT '>> -------------';
+
+
+	-- Loading silver.erp_px_cat_g1v2
+    SET @start_time = GETDATE();
+	PRINT '>> Truncating Table: silver.erp_px_cat_g1v2';
+	TRUNCATE TABLE silver.erp_px_cat_g1v2;
+	PRINT '>> Inserting Data Into: silver.erp_px_cat_g1v2';
+
+	INSERT INTO silver.erp_px_cat_g1v2(
+		id,
+		cat,
+		subcat,
+		maintenance
+	)
+	SELECT -- Direct load without transformation.
+		id,
+		cat,
+		subcat,
+		maintenance
+	FROM
+		bronze.erp_px_cat_g1v2
+
+	SET @end_time = GETDATE();
+    PRINT '>> Load Duration: ' + CAST(DATEDIFF(SECOND, @start_time, @end_time) AS NVARCHAR) + ' seconds';
+    PRINT '>> -------------';
+
+	SET @batch_end_time = GETDATE();
+
+	PRINT '=========================================='
+	PRINT 'Loading Silver Layer is Completed';
+    PRINT '   - Total Load Duration: ' + CAST(DATEDIFF(SECOND, @batch_start_time, @batch_end_time) AS NVARCHAR) + ' seconds';
+	PRINT '=========================================='
+
 	END TRY
 	BEGIN CATCH
 		PRINT '=========================================='
-		PRINT 'ERROR OCCURED DURING LOADING BRONZE LAYER'
+		PRINT 'ERROR OCCURED DURING LOADING SILVER LAYER'
 		PRINT 'Error Message' + ERROR_MESSAGE();
 		PRINT 'Error Message' + CAST (ERROR_NUMBER() AS NVARCHAR);
 		PRINT 'Error Message' + CAST (ERROR_STATE() AS NVARCHAR);
