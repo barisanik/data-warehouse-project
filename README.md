@@ -11,6 +11,7 @@ Projede kullanılan CSV dosyaları [datasets](https://github.com/barisanik/data-
 ## Proje Kararları
 - Veri kaynağı olarak 6 adet CSV dosyası kullanılmaktadır. Veri modelleme aşaması için madalyon mimarisi (bronze-silver-gold) kullanılacaktır.
 - İkame edilemeyen tüm NULL değerler 'n/a' olarak düzenlenecektir.
+- Doğru olmayan doğum tarihleri (çok eski veya 18 yaşından genç olan) NULL olarak kaydedilecektir.
 - Sembol ve kısaltma olarak kullanılan tüm ifadeler anlamlı metinlerle değiştirilecektir.
 - Veri yükleme tekniği olarak Full Load tercih edilmiştir. Veri kaynağından veri ambarına tüm veriler tek seferde aktarılacaktır.
 
@@ -32,6 +33,7 @@ CSV files used in this project can be found under the [datasets](https://github.
 ## Project Decisions
 - Six CSV files are used as data sources. The medallion architecture (bronze-silver-gold) will be utilized for the data modeling phase.
 - All non-replaceable NULL values will be set to 'n/a'.
+- Inaccurate birthday dates will be replaced with NULL.
 - All symbols and abbreviations will be replaced with meaningful descriptions.
 - Full load has been preferred as the data loading technique, meaning the entire dataset from the source files will be transferred to the data warehouse in a single operation
 
