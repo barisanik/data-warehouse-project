@@ -10,23 +10,43 @@ from datetime import datetime
 
 CORRUPTION_RATE = 0.4
 CORRUPTABLE_FIELDS = ['title', 'category']
-API_URL = "https://dummyjson.com/products"
+API_URL = ""
 
 def fetch_products(url: str) -> list:
     response = requests.get(url)
     response.raise_for_status()
     return response.json()['products']
 
-def flatten_product(product: dict) -> dict:
+def fetch_data(url: str, maintag: str, subtag: str = None) -> list:
+    response = requests.get(url)
+    response.raise_for_status()
+    result = response.json()
+    if subtag != None:
+        return result[maintag][subtag]
+    else:
+        return result[maintag]
+
+def flatten_data(datatype: str, json: dict) -> dict:
     "Gets the relevant fields and flattens the structure for easier processing."
-    return {
-        'id':        product['id'],
-        'title':     product['title'],
-        'category':  product['category'],
-        'sku':       product['sku'],
-        'createdAt': product['meta']['createdAt'],
-        'source':    'api-dummyjson',  
-    }
+    if datatype == 'product':
+        return {
+            'id':        json['id'],
+            'title':     json['title'],
+            'category':  json['category'],
+            'sku':       json['sku'],
+            'createdAt': json['meta']['createdAt'],
+            'source':    'api-dummyjson',  
+        }
+    elif datatype == 'user':
+        return {
+            'id':        json['id'],
+            'first_name':     json['firstName'],
+            'last_name':  json['lastName'],
+            'gender':       json['gender'],
+            'birthdate': json['birthDate'],
+            'city': json['address']['city'],
+            'source':    'api-dummyjson',  
+        }
 
 def corrupt_id(value: int) -> str:
     "Corrupts numeric ID field by adding prefixes, leading zeros or adding whitespace."
@@ -52,7 +72,7 @@ def corrupt_string(value: str) -> str:
     chosen = random.choices(strategies, weights=weights)[0]
     return chosen(value)
 
-def corrupt_sku(value: str) -> str:
+def corrupt_key(value: str) -> str:
     "Corrupts product key (sku) by changing delimiters, case and adding random suffixes."
     strategies = [
         lambda v: v.replace('-', '_'),              # BEA_ESS_001
@@ -81,8 +101,12 @@ CORRUPTORS = {
     'id':        corrupt_id,
     'title':     corrupt_string,
     'category':  corrupt_string,
-    'sku':       corrupt_sku,
+    'sku':       corrupt_key,
     'createdAt': corrupt_date,
+    'first_name':corrupt_string,
+    'last_name': corrupt_string,
+    'gender': corrupt_string,
+    'birthdate': corrupt_date,
 }
 
 def corruption_possibility(field: str, value, rate: float):
@@ -99,11 +123,22 @@ def corrupt_record(record: dict, rate: float) -> dict:
 # --- Main ---
 
 def main():
-    products = fetch_products(API_URL)
+    API_URL = "https://dummyjson.com/products?limit=10000"
+    products = fetch_data(API_URL, 'products')
     for product in products:
-        flat = flatten_product(product)
-        corrupted = corrupt_record(flat, CORRUPTION_RATE)
+        flatten_product = flatten_data('product', product)
+        corrupted = corrupt_record(flatten_product, CORRUPTION_RATE)
         print(corrupted)
+        print("-")
+        
+    print('USER DATA ---------')
+
+    API_URL = "https://dummyjson.com/users?limit=10000"
+    users = fetch_data(API_URL, 'users')
+    for user in users:
+        flatten_user_record = flatten_data('user', user)
+        corrupted_record = corrupt_record(flatten_user_record, CORRUPTION_RATE)
+        print(corrupted_record)
         print("-")
 
 if __name__ == "__main__":
