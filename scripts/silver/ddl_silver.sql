@@ -97,3 +97,36 @@ CREATE TABLE silver.erp_px_cat_g1v2 (
     dwh_create_date DATETIME2 DEFAULT GETDATE()
 );
 GO
+
+-- API Tables
+-- dummyjson
+
+
+IF OBJECT_ID('silver.djapi_product', 'U') IS NOT NULL
+    DROP TABLE silver.djapi_product;
+GO
+
+CREATE TABLE silver.djapi_product (
+    id           NVARCHAR(50),
+    title          NVARCHAR(100),
+    category       NVARCHAR(50),
+    pkey  NVARCHAR(50),
+    createdAt DATETIME,
+    dwh_create_date DATETIME2 DEFAULT GETDATE()
+);
+GO
+
+IF OBJECT_ID('silver.djapi_user', 'U') IS NOT NULL
+    DROP TABLE silver.djapi_user;
+GO
+
+CREATE TABLE silver.djapi_user (
+    id NVARCHAR(50),
+    first_name NVARCHAR(100),
+    last_name NVARCHAR(100),
+    gender NVARCHAR(50),
+    birthdate DATE,
+    city NVARCHAR(100),
+    dwh_create_date DATETIME2 DEFAULT GETDATE()
+);
+GO
