@@ -255,6 +255,82 @@ BEGIN
     PRINT '>> Load Duration: ' + CAST(DATEDIFF(SECOND, @start_time, @end_time) AS NVARCHAR) + ' seconds';
     PRINT '>> -------------';
 
+	PRINT '------------------------------------------------';
+	PRINT 'Loading API Tables';
+	PRINT '------------------------------------------------';
+
+	-- Loading silver.djapi_product
+    SET @start_time = GETDATE();
+	PRINT '>> Truncating Table: silver.djapi_product';
+	TRUNCATE TABLE silver.djapi_product;
+	PRINT '>> Inserting Data Into: silver.djapi_product';
+
+	INSERT INTO silver.djapi_product(
+		id,
+		title,
+		category,
+		pkey
+		,createdAt
+	)
+	SELECT
+		CAST(TRIM(REPLACE(id,'dummy-','')) AS INT) AS id -- Clear prefix.
+		,[dbo].[FN_InitCap](TRIM(title)) AS title -- Set first character of each word uppercase.
+		,[dbo].[FN_InitCap](TRIM(REPLACE(category,'-',' '))) AS category -- Set first character of each word uppercase.
+		,CASE 
+			WHEN LEN(pkey) > 15 THEN SUBSTRING(UPPER(REPLACE(TRIM(pkey),'_','-')), 0, 16) -- Clear suffix
+			ELSE UPPER(REPLACE(TRIM(pkey),'_','-')) 
+		END AS pkey
+		,createdAt
+	FROM
+		bronze.djapi_product
+	WHERE	
+		title IS NOT NULL -- Avoid nameless products
+
+	SET @end_time = GETDATE();
+    PRINT '>> Load Duration: ' + CAST(DATEDIFF(SECOND, @start_time, @end_time) AS NVARCHAR) + ' seconds';
+    PRINT '>> -------------';
+
+	-- Loading silver.djapi_user
+    SET @start_time = GETDATE();
+	PRINT '>> Truncating Table: silver.djapi_user';
+	TRUNCATE TABLE silver.djapi_user;
+	PRINT '>> Inserting Data Into: silver.djapi_user';
+
+	INSERT INTO silver.djapi_user(
+		id,
+		first_name,
+		last_name,
+		gender,
+		birthdate,
+		city
+	)
+	SELECT
+		CAST(TRIM(REPLACE(id,'dummy-','')) AS INT) AS id -- Clear prefix.
+		,CASE 
+			WHEN first_name IS NULL THEN 'n/a' -- Replace NULL value with string 'n/a'.
+			ELSE UPPER(LEFT(TRIM(first_name), 1)) + LOWER(SUBSTRING(TRIM(first_name), 2, LEN(first_name))) -- Set first character as uppercase and rest of it lowercase.
+		END AS first_name
+		,CASE 
+			WHEN last_name IS NULL THEN 'n/a' -- Replace NULL value with string 'n/a'.
+			ELSE UPPER(LEFT(TRIM(last_name), 1)) + LOWER(SUBSTRING(TRIM(last_name), 2, LEN(last_name))) -- Set first character as uppercase and rest of it lowercase.
+		END AS last_name
+		,CASE 
+			WHEN gender IS NULL THEN 'n/a' -- Replace NULL value with string 'n/a'.
+			ELSE UPPER(LEFT(TRIM(gender), 1)) + LOWER(SUBSTRING(TRIM(gender), 2, LEN(gender))) -- Set first character as uppercase and rest of it lowercase.
+		END AS gender
+		,CASE								-- Set future and out-of-range birthday dates to NULL.
+			WHEN (birthdate < '1900-01-01' OR (birthdate > DATEADD( YEAR, -18, GETDATE() ))) THEN NULL
+			ELSE birthdate
+		END AS birthdate
+		,[dbo].[FN_InitCap](TRIM(city)) AS city -- Set first character of each word uppercase.
+	FROM
+		bronze.djapi_user
+
+	SET @end_time = GETDATE();
+    PRINT '>> Load Duration: ' + CAST(DATEDIFF(SECOND, @start_time, @end_time) AS NVARCHAR) + ' seconds';
+    PRINT '>> -------------';
+
+
 	SET @batch_end_time = GETDATE();
 
 	PRINT '=========================================='
