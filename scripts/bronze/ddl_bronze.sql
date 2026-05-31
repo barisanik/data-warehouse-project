@@ -91,3 +91,34 @@ CREATE TABLE bronze.erp_px_cat_g1v2 (
     maintenance  NVARCHAR(50)
 );
 GO
+
+-- API Tables
+-- dummyjson
+
+
+IF OBJECT_ID('bronze.djapi_product', 'U') IS NOT NULL
+    DROP TABLE bronze.djapi_product;
+GO
+
+CREATE TABLE bronze.djapi_product (
+    id           NVARCHAR(50),
+    title          NVARCHAR(100),
+    category       NVARCHAR(50),
+    pkey  NVARCHAR(50),
+    createdAt DATETIME
+);
+GO
+
+IF OBJECT_ID('bronze.djapi_user', 'U') IS NOT NULL
+    DROP TABLE bronze.djapi_user;
+GO
+
+CREATE TABLE bronze.djapi_user (
+    id NVARCHAR(50),
+    first_name NVARCHAR(100),
+    last_name NVARCHAR(100),
+    gender NVARCHAR(50),
+    birthdate DATE,
+    city NVARCHAR(100)
+);
+GO
