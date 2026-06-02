@@ -122,3 +122,17 @@ CREATE TABLE bronze.djapi_user (
     city NVARCHAR(100)
 );
 GO
+
+IF OBJECT_ID('bronze.djapi_order', 'U') IS NOT NULL
+    DROP TABLE bronze.djapi_order;
+GO
+
+CREATE TABLE bronze.djapi_order (
+    id NVARCHAR(50),
+    prd_id NVARCHAR(50),
+    cust_id NVARCHAR(50),
+    unit_price INT,
+    quantity INT,
+    total_price INT
+);
+GO
