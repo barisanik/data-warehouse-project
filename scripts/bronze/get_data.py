@@ -36,6 +36,15 @@ USER_CONFIG = IngestConfig(url="https://dummyjson.com/users?limit=10000",
     extract_values=lambda r: (r['id'], r['first_name'], r['last_name'], r['gender'], r['birthdate'], r['city'])
 )
 
+ORDER_CONFIG = IngestConfig(
+    url="https://dummyjson.com/carts?limit=10000",
+    data_type="order",
+    main_tag="carts",
+    table="bronze.djapi_order",
+    insert_query="INSERT INTO bronze.djapi_order (id, prd_id, cust_id, unit_price, quantity, total_price) VALUES (?, ?, ?, ?, ?, ?)",
+    extract_values=lambda r: (r['order_id'], r['cust_id'], r['prd_id'], r['unit_price'], r['quantity'], r['total_price'])
+)
+
 ### Initial parameters ###
 # Data corruption parameters
 CORRUPTION_RATE = 0.4
@@ -78,8 +87,13 @@ def ingest(config: IngestConfig, cursor, rate: float):
     try:
         for record in records:
             flat = flatten_data(config.data_type, record)
-            corrupted = corrupt_record(flat, rate)
-            cursor.execute(config.insert_query, config.extract_values(corrupted))
+
+            rows = flat if isinstance(flat, list) else [flat] # If flat not in list nest it in a list.
+
+            for row in rows:
+                corrupted = corrupt_record(row, rate)
+                cursor.execute(config.insert_query, config.extract_values(corrupted))
+
     except pyodbc.Error as e:
         logging.error(f"DB insert failed for {config.table}: {e}")
         raise
@@ -115,7 +129,20 @@ def flatten_data(datatype: str, data: dict) -> dict:
             'birthdate': data['birthDate'],
             'city': data['address']['city'],
             'source':    'api-dummyjson',  
-        } 
+        }
+    elif datatype == 'order':
+        result = []
+        for product in data['products']:
+            result.append({
+                'order_id':       data['id'],
+                'cust_id':       data['userId'],
+                'prd_id':    product['id'],
+                'unit_price':         product['price'],
+                'quantity':      product['quantity'],
+                'total_price':    product['total'],
+                'source':        'api-dummyjson',
+            })
+        return result
     else:
         logging.error(f"Error on function: flatten_data. Invalid data type: {datatype}")
         raise ValueError(f"Invalid data type: {datatype}")
@@ -161,7 +188,10 @@ CORRUPTORS = {
     'sku':       corrupt_key,
     'first_name':corrupt_string,
     'last_name': corrupt_string,
-    'gender': corrupt_string
+    'gender': corrupt_string,
+    'order_id' : corrupt_id,
+    'cust_id' : corrupt_id,
+    'prd_id' : corrupt_id
 }
 
 def corruption_possibility(field: str, value, rate: float):
@@ -184,7 +214,7 @@ def main():
         with get_connection() as conn:
             with conn.cursor() as cursor:
                 logging.info("DB connection established.")
-                for config in [PRODUCT_CONFIG, USER_CONFIG]:
+                for config in [PRODUCT_CONFIG, USER_CONFIG, ORDER_CONFIG]:
                     ingest(config, cursor, CORRUPTION_RATE)
                 conn.commit()
 
