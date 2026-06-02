@@ -31,8 +31,8 @@ PRODUCT_CONFIG = IngestConfig(
 USER_CONFIG = IngestConfig(url="https://dummyjson.com/users?limit=10000",
     data_type="user",
     main_tag="users",
-    table="bronze.djapi_user",
-    insert_query="INSERT INTO bronze.djapi_user (id, first_name, last_name, gender, birthdate, city) VALUES (?, ?, ?, ?, ?, ?)",
+    table="bronze.djapi_customer",
+    insert_query="INSERT INTO bronze.djapi_customer (id, first_name, last_name, gender, birthdate, city) VALUES (?, ?, ?, ?, ?, ?)",
     extract_values=lambda r: (r['id'], r['first_name'], r['last_name'], r['gender'], r['birthdate'], r['city'])
 )
 
@@ -134,13 +134,13 @@ def flatten_data(datatype: str, data: dict) -> dict:
         result = []
         for product in data['products']:
             result.append({
-                'order_id':       data['id'],
-                'cust_id':       data['userId'],
-                'prd_id':    product['id'],
-                'unit_price':         product['price'],
-                'quantity':      product['quantity'],
-                'total_price':    product['total'],
-                'source':        'api-dummyjson',
+                'order_id':     data['id'],
+                'cust_id':      data['userId'],
+                'prd_id':       product['id'],
+                'unit_price':   product['price'],
+                'quantity':     product['quantity'],
+                'total_price':  product['total'],
+                'source':       'api-dummyjson',
             })
         return result
     else:

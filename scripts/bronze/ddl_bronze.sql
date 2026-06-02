@@ -109,11 +109,11 @@ CREATE TABLE bronze.djapi_product (
 );
 GO
 
-IF OBJECT_ID('bronze.djapi_user', 'U') IS NOT NULL
-    DROP TABLE bronze.djapi_user;
+IF OBJECT_ID('bronze.djapi_customer', 'U') IS NOT NULL
+    DROP TABLE bronze.djapi_customer;
 GO
 
-CREATE TABLE bronze.djapi_user (
+CREATE TABLE bronze.djapi_customer (
     id NVARCHAR(50),
     first_name NVARCHAR(100),
     last_name NVARCHAR(100),
