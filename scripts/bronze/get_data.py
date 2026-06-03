@@ -48,6 +48,7 @@ ORDER_CONFIG = IngestConfig(
 ### Initial parameters ###
 # Data corruption parameters
 CORRUPTION_RATE = 0.4
+random.seed(0)
 
 # Database connection parameters
 SERVER_NAME = 'localhost'
@@ -180,6 +181,19 @@ def corrupt_key(value: str) -> str:
     ]
     return random.choice(strategies)(value)
 
+def corrupt_price(value: float) -> float:
+    "Corrupts unit price or total price of products."
+    strategies = [
+        lambda v: v,
+        lambda v: v + ((v / 2) * -1),
+        lambda v: v + (v / 2),
+        lambda v: v + (v * 2),
+        lambda v: None,
+    ]
+    weights = [0.7, 0.13, 0.13, 0.02, 0.02]
+    resultValue = random.choices(strategies, weights=weights)[0](value)
+    return resultValue
+
 # Match fields with relevant corruption functions.
 CORRUPTORS = {
     'id':        corrupt_id,
@@ -191,7 +205,8 @@ CORRUPTORS = {
     'gender': corrupt_string,
     'order_id' : corrupt_id,
     'cust_id' : corrupt_id,
-    'prd_id' : corrupt_id
+    'prd_id' : corrupt_id,
+    'total_price' : corrupt_price
 }
 
 def corruption_possibility(field: str, value, rate: float):
