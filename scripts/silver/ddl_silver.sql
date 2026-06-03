@@ -9,6 +9,9 @@
         - This script will drop existing tables if they exist with the same name, which will result in data loss.
 */
 
+USE [DataWarehouse];
+GO
+
 -- CRM Tables
 IF OBJECT_ID('silver.crm_cust_info', 'U') IS NOT NULL
     DROP TABLE silver.crm_cust_info;
@@ -100,33 +103,46 @@ GO
 
 -- API Tables
 -- dummyjson
-
-
 IF OBJECT_ID('silver.djapi_product', 'U') IS NOT NULL
     DROP TABLE silver.djapi_product;
 GO
 
 CREATE TABLE silver.djapi_product (
-    id           NVARCHAR(50),
-    title          NVARCHAR(100),
-    category       NVARCHAR(50),
-    pkey  NVARCHAR(50),
-    createdAt DATETIME,
+    id              INT,
+    title           NVARCHAR(100),
+    category        NVARCHAR(50),
+    pkey            NVARCHAR(50),
+    createdAt       DATETIME,
     dwh_create_date DATETIME2 DEFAULT GETDATE()
 );
 GO
 
-IF OBJECT_ID('silver.djapi_user', 'U') IS NOT NULL
-    DROP TABLE silver.djapi_user;
+IF OBJECT_ID('silver.djapi_customer', 'U') IS NOT NULL
+    DROP TABLE silver.djapi_customer;
 GO
 
-CREATE TABLE silver.djapi_user (
-    id NVARCHAR(50),
-    first_name NVARCHAR(100),
-    last_name NVARCHAR(100),
-    gender NVARCHAR(50),
-    birthdate DATE,
-    city NVARCHAR(100),
+CREATE TABLE silver.djapi_customer (
+    id INT,
+    first_name      NVARCHAR(100),
+    last_name       NVARCHAR(100),
+    gender          NVARCHAR(50),
+    birthdate       DATE,
+    city            NVARCHAR(100),
+    dwh_create_date DATETIME2 DEFAULT GETDATE()
+);
+GO
+
+IF OBJECT_ID('silver.djapi_order', 'U') IS NOT NULL
+    DROP TABLE silver.djapi_order;
+GO
+
+CREATE TABLE silver.djapi_order (
+    id              INT,
+    prd_id          INT,
+    cust_id         INT,
+    unit_price      DECIMAL(10,2),
+    quantity        INT,
+    total_price     DECIMAL(10,2),
     dwh_create_date DATETIME2 DEFAULT GETDATE()
 );
 GO

@@ -9,7 +9,7 @@
         - This script will drop existing tables if they exist with the same name, which will result in data loss.
 */
 
-USE DataWarehouse;
+USE [DataWarehouse];
 GO
 
 IF OBJECT_ID('bronze.crm_cust_info', 'U') IS NOT NULL
@@ -101,11 +101,11 @@ IF OBJECT_ID('bronze.djapi_product', 'U') IS NOT NULL
 GO
 
 CREATE TABLE bronze.djapi_product (
-    id           NVARCHAR(50),
-    title          NVARCHAR(100),
-    category       NVARCHAR(50),
-    pkey  NVARCHAR(50),
-    createdAt DATETIME
+    id              NVARCHAR(50),
+    title           NVARCHAR(100),
+    category        NVARCHAR(50),
+    pkey            NVARCHAR(50),
+    createdAt       DATETIME
 );
 GO
 
@@ -114,12 +114,12 @@ IF OBJECT_ID('bronze.djapi_customer', 'U') IS NOT NULL
 GO
 
 CREATE TABLE bronze.djapi_customer (
-    id NVARCHAR(50),
-    first_name NVARCHAR(100),
-    last_name NVARCHAR(100),
-    gender NVARCHAR(50),
-    birthdate DATE,
-    city NVARCHAR(100)
+    id              NVARCHAR(50),
+    first_name      NVARCHAR(100),
+    last_name       NVARCHAR(100),
+    gender          NVARCHAR(50),
+    birthdate       DATE,
+    city            NVARCHAR(100)
 );
 GO
 
@@ -128,11 +128,11 @@ IF OBJECT_ID('bronze.djapi_order', 'U') IS NOT NULL
 GO
 
 CREATE TABLE bronze.djapi_order (
-    id NVARCHAR(50),
-    prd_id NVARCHAR(50),
-    cust_id NVARCHAR(50),
-    unit_price INT,
-    quantity INT,
-    total_price INT
+    id              NVARCHAR(50),
+    prd_id          NVARCHAR(50),
+    cust_id         NVARCHAR(50),
+    unit_price      DECIMAL(10,2),
+    quantity        INT,
+    total_price     DECIMAL(10,2)
 );
 GO
