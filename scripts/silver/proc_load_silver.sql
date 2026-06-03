@@ -11,6 +11,9 @@
 	WARNING: This script will truncate the target tables before loading data, which will cause loss of existing data in those tables.
 */
 
+USE [DataWarehouse];
+GO
+
 CREATE OR ALTER PROCEDURE silver.load_silver AS
 BEGIN
     DECLARE @start_time DATETIME, @end_time DATETIME, @batch_start_time DATETIME, @batch_end_time DATETIME; 
@@ -290,13 +293,13 @@ BEGIN
     PRINT '>> Load Duration: ' + CAST(DATEDIFF(SECOND, @start_time, @end_time) AS NVARCHAR) + ' seconds';
     PRINT '>> -------------';
 
-	-- Loading silver.djapi_user
+	-- Loading silver.djapi_customer
     SET @start_time = GETDATE();
-	PRINT '>> Truncating Table: silver.djapi_user';
-	TRUNCATE TABLE silver.djapi_user;
-	PRINT '>> Inserting Data Into: silver.djapi_user';
+	PRINT '>> Truncating Table: silver.djapi_customer';
+	TRUNCATE TABLE silver.djapi_customer;
+	PRINT '>> Inserting Data Into: silver.djapi_customer';
 
-	INSERT INTO silver.djapi_user(
+	INSERT INTO silver.djapi_customer(
 		id,
 		first_name,
 		last_name,
@@ -324,7 +327,53 @@ BEGIN
 		END AS birthdate
 		,[dbo].[FN_InitCap](TRIM(city)) AS city -- Set first character of each word uppercase.
 	FROM
-		bronze.djapi_user
+		bronze.djapi_customer
+
+	SET @end_time = GETDATE();
+    PRINT '>> Load Duration: ' + CAST(DATEDIFF(SECOND, @start_time, @end_time) AS NVARCHAR) + ' seconds';
+    PRINT '>> -------------';
+
+	-- Loading silver.djapi_order
+    SET @start_time = GETDATE();
+	PRINT '>> Truncating Table: silver.djapi_order';
+	TRUNCATE TABLE silver.djapi_order;
+	PRINT '>> Inserting Data Into: silver.djapi_order';
+
+	INSERT INTO silver.djapi_order(
+		id,
+		prd_id,
+		cust_id,
+		unit_price,
+		quantity,
+		total_price
+	)
+	SELECT
+		CAST(TRIM(REPLACE(id,'dummy-','')) AS INT) AS id -- Clear prefix.
+		,CAST(TRIM(REPLACE(prd_id,'dummy-','')) AS INT) AS prd_id -- Clear prefix.
+		,CAST(TRIM(REPLACE(cust_id,'dummy-','')) AS INT) AS cust_id -- Clear prefix.
+		,unit_price 
+		,CASE	-- Normalize quantity
+			WHEN quantity = 0 OR quantity IS NULL THEN 1
+			WHEN quantity < 0 THEN ABS(quantity)
+			ELSE quantity
+		END AS quantity
+		,CASE	-- Derive total price with quantity * unit_price formula. (For inaccurate records)
+			WHEN (total_price != unit_price * quantity) AND (quantity > 0) THEN unit_price * quantity
+			WHEN (total_price != unit_price * quantity) AND ((quantity = 0) OR (quantity IS NULL)) THEN unit_price
+			WHEN (total_price != unit_price * quantity) AND (quantity < 0) THEN unit_price * ABS(quantity)
+			ELSE total_price
+		END AS total_price
+	FROM
+		bronze.djapi_order
+	WHERE
+		-- Get order records related with existing product and customer records.
+		CAST(TRIM(REPLACE(prd_id,'dummy-','')) AS INT) IN (SELECT id FROM silver.djapi_product)
+		AND CAST(TRIM(REPLACE(cust_id,'dummy-','')) AS INT) IN (SELECT id FROM silver.djapi_customer)
+		-- Avoid records with wrong unit price.
+		AND unit_price IS NOT NULL 
+		AND unit_price > 0
+	ORDER BY
+		CAST(TRIM(REPLACE(id,'dummy-','')) AS INT)
 
 	SET @end_time = GETDATE();
     PRINT '>> Load Duration: ' + CAST(DATEDIFF(SECOND, @start_time, @end_time) AS NVARCHAR) + ' seconds';
