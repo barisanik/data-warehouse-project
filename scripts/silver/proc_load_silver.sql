@@ -305,7 +305,10 @@ BEGIN
 		last_name,
 		gender,
 		birthdate,
-		city
+		city,
+		[state],
+		state_code,
+		country
 	)
 	SELECT
 		CAST(TRIM(REPLACE(id,'dummy-','')) AS INT) AS id -- Clear prefix.
@@ -326,6 +329,9 @@ BEGIN
 			ELSE birthdate
 		END AS birthdate
 		,[dbo].[FN_InitCap](TRIM(city)) AS city -- Set first character of each word uppercase.
+		,[dbo].[FN_InitCap](TRIM([state])) AS [state] -- Set first character of each word uppercase.
+		,UPPER(TRIM(state_code)) AS state_code -- Set first character of each word uppercase.
+		,[dbo].[FN_InitCap](TRIM(country)) AS country -- Set first character of each word uppercase.
 	FROM
 		bronze.djapi_customer
 

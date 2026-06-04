@@ -128,6 +128,9 @@ CREATE TABLE silver.djapi_customer (
     gender          NVARCHAR(50),
     birthdate       DATE,
     city            NVARCHAR(100),
+    [state]         NVARCHAR(100),
+    state_code      NVARCHAR(100),
+    country         NVARCHAR(100),
     dwh_create_date DATETIME2 DEFAULT GETDATE()
 );
 GO

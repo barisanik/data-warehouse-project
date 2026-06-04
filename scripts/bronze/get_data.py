@@ -32,8 +32,8 @@ USER_CONFIG = IngestConfig(url="https://dummyjson.com/users?limit=10000",
     data_type="user",
     main_tag="users",
     table="bronze.djapi_customer",
-    insert_query="INSERT INTO bronze.djapi_customer (id, first_name, last_name, gender, birthdate, city) VALUES (?, ?, ?, ?, ?, ?)",
-    extract_values=lambda r: (r['id'], r['first_name'], r['last_name'], r['gender'], r['birthdate'], r['city'])
+    insert_query="INSERT INTO bronze.djapi_customer (id, first_name, last_name, gender, birthdate, city, state, state_code, country) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    extract_values=lambda r: (r['id'], r['first_name'], r['last_name'], r['gender'], r['birthdate'], r['city'], r['state'], r['state_code'], r['country'])
 )
 
 ORDER_CONFIG = IngestConfig(
@@ -114,22 +114,25 @@ def flatten_data(datatype: str, data: dict) -> dict:
     "Gets the relevant fields and flattens the structure for easier processing."
     if datatype == 'product':
         return {
-            'id':        data['id'],
-            'title':     data['title'],
-            'category':  data['category'],
-            'sku':       data['sku'],
+            'id':               data['id'],
+            'title':            data['title'],
+            'category':         data['category'],
+            'sku':              data['sku'],
             'productCreatedAt': data['meta']['createdAt'],
-            'source':    'api-dummyjson',  
+            'source':           'api-dummyjson',  
         }
     elif datatype == 'user':
         return {
-            'id':        data['id'],
-            'first_name':     data['firstName'],
-            'last_name':  data['lastName'],
+            'id':           data['id'],
+            'first_name':   data['firstName'],
+            'last_name':    data['lastName'],
             'gender':       data['gender'],
-            'birthdate': data['birthDate'],
-            'city': data['address']['city'],
-            'source':    'api-dummyjson',  
+            'birthdate':    data['birthDate'],
+            'city':         data['address']['city'],
+            'state':        data['address']['state'],
+            'state_code':   data['address']['stateCode'],
+            'country':      data['address']['country'],
+            'source':       'api-dummyjson',  
         }
     elif datatype == 'order':
         result = []

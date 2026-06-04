@@ -606,6 +606,84 @@
 			LEN(city) != LEN(TRIM(city))
 			OR city IS NULL
 
+		-- Col: state
+		-- Findings: There is no corruption on column 'state'.
+		SELECT
+			[state]
+		FROM
+			bronze.djapi_customer
+		WHERE
+			LEN([state]) != LEN(TRIM([state]))
+			OR [state] IS NULL
+
+		SELECT
+			[state],
+			COUNT([state]) AS [Count]
+		FROM
+			bronze.djapi_customer
+		GROUP BY
+			[state]
+
+		SELECT
+			[state]
+		FROM
+			bronze.djapi_customer
+		WHERE
+			LEN([state]) != LEN(TRIM([state]))
+			OR [state] IS NULL
+
+		-- Col: state_code
+		-- Findings: There is no corruption on column 'state_code'.
+		SELECT
+			state_code
+		FROM
+			bronze.djapi_customer
+		WHERE
+			LEN(state_code) != LEN(TRIM(state_code))
+			OR state_code IS NULL
+
+		SELECT
+			state_code,
+			COUNT(state_code) AS [Count]
+		FROM
+			bronze.djapi_customer
+		GROUP BY
+			state_code
+
+		SELECT
+			state_code
+		FROM
+			bronze.djapi_customer
+		WHERE
+			LEN(state_code) != LEN(TRIM(state_code))
+			OR state_code IS NULL
+
+		-- Col: country
+		-- Findings: There is no corruption on column 'country'.
+		SELECT
+			country
+		FROM
+			bronze.djapi_customer
+		WHERE
+			LEN(country) != LEN(TRIM(country))
+			OR country IS NULL
+
+		SELECT
+			country,
+			COUNT(country) AS [Count]
+		FROM
+			bronze.djapi_customer
+		GROUP BY
+			country
+
+		SELECT
+			country
+		FROM
+			bronze.djapi_customer
+		WHERE
+			LEN(country) != LEN(TRIM(country))
+			OR country IS NULL
+
 	-- Table: djapi_order
 
 		SELECT * FROM bronze.djapi_order

@@ -119,7 +119,10 @@ CREATE TABLE bronze.djapi_customer (
     last_name       NVARCHAR(100),
     gender          NVARCHAR(50),
     birthdate       DATE,
-    city            NVARCHAR(100)
+    city            NVARCHAR(100),
+    [state]         NVARCHAR(100),
+    state_code      NVARCHAR(100),
+    country         NVARCHAR(100)
 );
 GO
 
