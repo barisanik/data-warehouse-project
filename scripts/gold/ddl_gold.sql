@@ -74,26 +74,74 @@ IF OBJECT_ID('gold.dim_products', 'V') IS NOT NULL
 GO
 
 CREATE VIEW gold.dim_products AS 
-SELECT
-    ROW_NUMBER() OVER( ORDER BY cp.prd_start_dt, cp.prd_key) AS product_key
-    -- Product identity
-    ,cp.prd_id AS product_id
-    ,cp.prd_key AS product_number
-    ,cp.prd_nm AS product_name
-    -- Product Category
-    ,cp.cat_id AS category_id
-    ,prc.cat AS category
-    ,prc.subcat AS subcategory
-    ,prc.maintenance
-    -- Production Details
-    ,cp.prd_cost AS cost
-    ,cp.prd_line AS product_line
-    ,cp.prd_start_dt AS [start_date]
-FROM
-    silver.crm_prd_info cp
-    LEFT JOIN silver.erp_px_cat_g1v2 prc ON cp.cat_id = prc.id
-WHERE
-    cp.prd_end_dt IS NULL; -- Keep only last records with avoiding historical records.
+    SELECT
+        ROW_NUMBER() OVER( ORDER BY a.[product_id], a.[data_source]) AS product_key
+        ,CASE
+            WHEN [data_source] = 'erp-csv' THEN CONCAT('CSV-', CAST(a.product_id AS VARCHAR(20)))
+            WHEN [data_source] = 'dummyjson-api' THEN CONCAT('API-', CAST(a.product_id AS VARCHAR(20)))
+            ELSE 'Unknown'
+        END AS product_id
+        ,product_number
+        ,product_name
+        ,category_id
+        ,CASE
+            WHEN category IS NULL THEN 'n/a'
+            ELSE category
+        END AS category
+        ,subcategory
+        ,CASE
+            WHEN maintenance IS NULL THEN 'n/a'
+            ELSE maintenance
+        END AS maintenance
+        ,CASE
+            WHEN cost IS NULL THEN 0
+            ELSE cost 
+        END AS cost
+        ,CASE
+            WHEN product_line IS NULL THEN 'Other Sales'
+            ELSE product_line
+        END AS product_line
+        ,[start_date]
+        ,[data_source]
+    FROM(
+        SELECT
+            -- Product identity
+            cp.prd_id AS product_id
+            ,cp.prd_key AS product_number
+            ,cp.prd_nm AS product_name
+            -- Product Category
+            ,cp.cat_id AS category_id
+            ,prc.cat AS category
+            ,prc.subcat AS subcategory
+            ,prc.maintenance
+            -- Production Details
+            ,cp.prd_cost AS cost
+            ,cp.prd_line AS product_line
+            ,cp.prd_start_dt AS [start_date]
+            ,'erp-csv' AS [data_source]
+        FROM
+            silver.crm_prd_info cp
+            LEFT JOIN silver.erp_px_cat_g1v2 prc ON cp.cat_id = prc.id
+        WHERE
+            cp.prd_end_dt IS NULL -- Keep only last records with avoiding historical records.
+
+        UNION ALL
+
+        SELECT
+            dp.id AS product_id
+            ,dp.pkey AS product_number
+            ,dp.title AS product_name
+            ,LEFT(dp.pkey,3) AS category_id
+            ,dp.category AS category
+            ,NULL AS subcategory
+            ,NULL AS maintenance
+            ,NULL AS cost
+            ,NULL AS product_line
+            ,dp.createdAt AS [start_date]
+            ,'dummyjson-api' AS [data_source]
+        FROM
+            silver.djapi_product dp
+    ) a;
 GO
 
 -- Fact: Sales
