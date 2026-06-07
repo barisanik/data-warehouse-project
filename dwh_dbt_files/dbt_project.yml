@@ -1,0 +1,23 @@
+name: dwh_dbt_files
+version: "1.0.0"
+profile: dwh_dbt_files
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+analysis-paths: ["analyses"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:
+  - target
+  - dbt_packages
+
+models:
+  dwh_dbt_files:
+    staging:
+      +materialized: table
+      +schema: silver
+    marts:
+      +materialized: view
+      +schema: gold
