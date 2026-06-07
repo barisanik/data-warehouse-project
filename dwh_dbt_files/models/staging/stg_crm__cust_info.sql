@@ -47,6 +47,7 @@ cleaned AS (
             ELSE 'n/a'
         END                                     AS cst_gndr
         ,cst_create_date
+        ,GETDATE() AS dwh_create_date
     FROM
         deduplicated
     WHERE

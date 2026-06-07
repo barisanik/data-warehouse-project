@@ -22,3 +22,43 @@ models:
                 severity: error
               arguments:
                 values: ['Single', 'Married', 'n/a']
+      - name: dwh_create_date
+        tests:
+          - not_null
+  - name: stg_crm__prd_info
+    description: "Formatted CRM products records."
+    columns:
+      - name: prd_id
+        tests:
+          - not_null
+          - unique
+      - name: cat_id
+        tests:
+          - not_null
+      - name: prd_key
+        tests:
+          - not_null
+      - name: prd_nm
+        tests:
+          - not_null
+      - name: prd_cost
+        tests:
+          - not_null
+      - name: prd_line
+        tests:
+          - accepted_values:
+              config:
+                severity: error
+              arguments:
+                values: ['Mountain', 'Road', 'Other Sales', 'Touring', 'n/a']
+      - name: prd_start_dt
+        tests:
+          - not_null
+      - name: prd_end_dt
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: dwh_create_date
+        tests:
+          - not_null
