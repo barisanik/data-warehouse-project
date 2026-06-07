@@ -8,13 +8,14 @@ models:
         tests:
           - not_null
           - unique
-      - name: cst_gndr
+      - name: cst_firstname
         tests:
-          - accepted_values:
-              config:
-                severity: error
-              arguments:
-                values: ['Male', 'Female', 'n/a']
+          - not_null
+          - no_whitespace
+      - name: cst_lastname
+        tests:
+          - not_null
+          - no_whitespace
       - name: cst_marital_status
         tests:
           - accepted_values:
@@ -22,6 +23,16 @@ models:
                 severity: error
               arguments:
                 values: ['Single', 'Married', 'n/a']
+      - name: cst_gndr
+        tests:
+          - accepted_values:
+              config:
+                severity: error
+              arguments:
+                values: ['Male', 'Female', 'n/a']
+      - name: cst_create_date
+        tests:
+          - not_null
       - name: dwh_create_date
         tests:
           - not_null
