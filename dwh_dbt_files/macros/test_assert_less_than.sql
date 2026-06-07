@@ -1,9 +1,9 @@
 /*
 	# ============================================================================ #
-		Macro: matches_pattern
+		Macro: assert_less_than
 	# ============================================================================ #
-        Purpose: Ensures input value matches to given pattern.
-        Logic: Returns values with not matching format. dbt marks a test as failed if this query returns any rows.
+        Purpose: Ensures column_a is strictly less than column_b.
+        Logic: Returns rows where column_a is equal or higher than column_b. dbt marks a test as failed if this query returns any rows.
 
         Usage on schema.yml:
 
@@ -12,21 +12,20 @@
             columns:
             - name: column_name
                 tests:
-                - matches_pattern:
+                - assert_less_than:
                     arguments:
-                        pattern: '__[_]__'
-
-        Expected input for pass: 'AB_CD'
+                        column_b: prd_end_dt
 
 	# ============================================================================ #
 */
 
-{% test matches_pattern(model, column_name, pattern) %}
+{% test assert_less_than(model, column_name, column_b) %}
 
 SELECT {{ column_name }}
 FROM {{ model }}
 WHERE
     {{ column_name }} IS NOT NULL
-    AND {{ column_name }} NOT LIKE '{{ pattern }}'
+    AND {{ column_b }} IS NOT NULL
+    AND {{ column_name }} >= {{ column_b }}
 
 {% endtest %}
