@@ -1,0 +1,24 @@
+version: 2
+
+models:
+  - name: stg_crm__cust_info
+    description: "Deduplicated and cleaned CRM customer records."
+    columns:
+      - name: cst_id
+        tests:
+          - not_null
+          - unique
+      - name: cst_gndr
+        tests:
+          - accepted_values:
+              config:
+                severity: error
+              arguments:
+                values: ['Male', 'Female', 'n/a']
+      - name: cst_marital_status
+        tests:
+          - accepted_values:
+              config:
+                severity: error
+              arguments:
+                values: ['Single', 'Married', 'n/a']
