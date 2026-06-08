@@ -139,9 +139,9 @@ models:
         tests:
           - not_null
           - unique
-          - contains_character:
+          - not_contains_string:
               arguments:
-                character: '-'
+                text: '-'
       - name: cntry
         tests:
           - accepted_values:
@@ -149,6 +149,31 @@ models:
                 severity: error
               arguments:
                 values: ['United States', 'Germany', 'Australia', 'Canada', 'France', 'United Kingdom', 'n/a']
+      - name: dwh_create_date
+        tests:
+          - not_null
+  - name: stg_erp__cust_az12
+    description: "Formatted ERP customer birthday and gender records."
+    columns:
+      - name: cid
+        tests:
+          - not_null
+          - unique
+          - not_contains_string:
+              arguments:
+                text: 'NAS'
+      - name: bdate
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: gen
+        tests:
+          - accepted_values:
+              config:
+                severity: error
+              arguments:
+                values: ['Male', 'Female', 'n/a']
       - name: dwh_create_date
         tests:
           - not_null
