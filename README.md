@@ -22,6 +22,7 @@ Kullanılan API adresleri:
 - Değişken isimlendirme metodu olarak snake case kullanılacaktır.
 - Sorgularda ve kod parçacıklarında yorum satırlarında İngilizce dili kullanılacaktır.
 - Dummyjson kaynağından elde edilen sepetteki ürün verileri veri ambarına sipariş olarak işlenecektir.
+- dbt veri kalite kontrolü, silver katman tablolarının ve gold katman view'larının oluşturulmasında kullanılacaktır. Bronze katman tablolarında ham veri tutulması nedeniyle veri kalite kontrolü uygulanmayacaktır.
 
 ## Referanslar
 Bu proje aşağıdaki kaynağı referans alarak oluşturulmuştur. Temel metodoloji ilgili videoya dayanmakla birlikte farklı veri kaynakları projeye entegre edilerek modelleme süreçleri bu doğrultuda genişletilmiştir.
@@ -51,6 +52,7 @@ API endpoints used:
 - Snake case will be used for variable naming.
 - English will be used in comments for queries and code snippets.
 - Cart data sourced from DummyJSON is processed as orders.
+- dbt will be utilized for data quality control, as well as the creation of silver layer tables and gold layer views. Data quality control will not be applied to bronze layer tables, as they store raw data.
 
 ## References
 This project was built using the following video resource. Although the foundational methodology relies on the video, the data modeling processes were expanded by integrating diverse data sources.
