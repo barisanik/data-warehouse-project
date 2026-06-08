@@ -46,7 +46,7 @@ cleaned AS (
         END AS sls_sales
         ,ABS(ISNULL(sls_quantity,1)) AS sls_quantity -- Avoided zero, negative and null quantity value.
         ,CASE	-- Derived price value with (total sales price / quantity) formula where the original value is NULL, zero, or negative.
-            WHEN ((sls_price IS NULL OR sls_price = 0) AND (sls_quantity IS NOT NULL AND ABS(sls_quantity) > 0) AND (sls_sales IS NOT NULL)) THEN CAST(sls_sales AS DECIMAL(10,2)) / ABS(sls_quantity)
+            WHEN ((sls_price IS NULL OR sls_price = 0) AND (sls_quantity IS NOT NULL AND ABS(sls_quantity) > 0) AND (sls_sales IS NOT NULL)) THEN CAST(CAST(sls_sales AS DECIMAL(10,2)) / ABS(sls_quantity) AS DECIMAL(10,2))
             WHEN sls_price < 0 THEN ABS(sls_price) -- Converted negative value to positive with absolute function.
             ELSE sls_price
         END AS sls_price
