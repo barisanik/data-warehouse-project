@@ -177,3 +177,29 @@ models:
       - name: dwh_create_date
         tests:
           - not_null
+  - name: stg_erp__px_cat_g1v2
+    description: "Formatted ERP product category and maintenance records."
+    columns:
+      - name: id
+        tests:
+          - not_null
+          - unique
+          - matches_pattern:
+              arguments:
+                pattern: '__[_]__'
+      - name: cat
+        tests:
+          - not_null
+      - name: subcat
+        tests:
+          - not_null
+      - name: maintenance
+        tests:
+          - accepted_values:
+              config:
+                severity: error
+              arguments:
+                values: ['Yes', 'No', 'n/a']
+      - name: dwh_create_date
+        tests:
+          - not_null
