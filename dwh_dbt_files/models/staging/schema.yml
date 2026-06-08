@@ -46,6 +46,9 @@ models:
       - name: cat_id
         tests:
           - not_null
+          - matches_pattern:
+              arguments:
+                pattern: '__[_]__'
       - name: prd_key
         tests:
           - not_null
@@ -65,11 +68,67 @@ models:
       - name: prd_start_dt
         tests:
           - not_null
+          - assert_less_than:
+              arguments:
+                column_b: prd_end_dt
       - name: prd_end_dt
         tests:
           - not_null:
               config:
                 severity: warn
+      - name: dwh_create_date
+        tests:
+          - not_null
+  - name: stg_crm__sales_details
+    description: "Formatted CRM sales records."
+    columns:
+      - name: sls_ord_num
+        tests:
+          - not_null
+          - no_whitespace
+      - name: sls_prd_key
+        tests:
+          - not_null
+          - no_whitespace
+      - name: sls_cust_id
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                inclusive: false
+      - name: sls_order_dt
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: sls_ship_dt
+        tests:
+          - not_null
+      - name: sls_due_dt
+        tests:
+          - not_null
+      - name: sls_sales
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                inclusive: false
+      - name: sls_quantity
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                inclusive: false
+      - name: sls_price
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                inclusive: false
       - name: dwh_create_date
         tests:
           - not_null
