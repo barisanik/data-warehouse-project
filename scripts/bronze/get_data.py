@@ -42,7 +42,7 @@ ORDER_CONFIG = IngestConfig(
     main_tag="carts",
     table="bronze.djapi_order",
     insert_query="INSERT INTO bronze.djapi_order (id, prd_id, cust_id, unit_price, quantity, total_price) VALUES (?, ?, ?, ?, ?, ?)",
-    extract_values=lambda r: (r['order_id'], r['cust_id'], r['prd_id'], r['unit_price'], r['quantity'], r['total_price'])
+    extract_values=lambda r: (r['order_id'], r['prd_id'], r['cust_id'], r['unit_price'], r['quantity'], r['total_price'])
 )
 
 ### Initial parameters ###
