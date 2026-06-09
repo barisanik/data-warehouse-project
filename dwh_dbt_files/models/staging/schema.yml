@@ -52,9 +52,11 @@ models:
       - name: prd_key
         tests:
           - not_null
+          - no_whitespace
       - name: prd_nm
         tests:
           - not_null
+          - no_whitespace
       - name: prd_cost
         tests:
           - not_null
@@ -139,6 +141,7 @@ models:
         tests:
           - not_null
           - unique
+          - no_whitespace
           - not_contains_string:
               arguments:
                 text: '-'
@@ -159,6 +162,7 @@ models:
         tests:
           - not_null
           - unique
+          - no_whitespace
           - not_contains_string:
               arguments:
                 text: 'NAS'
@@ -190,9 +194,11 @@ models:
       - name: cat
         tests:
           - not_null
+          - no_whitespace
       - name: subcat
         tests:
           - not_null
+          - no_whitespace
       - name: maintenance
         tests:
           - accepted_values:
@@ -203,3 +209,55 @@ models:
       - name: dwh_create_date
         tests:
           - not_null
+  - name: stg_djapi__customer
+    description: "Formatted API customer records."
+    columns:
+      - name: id
+        tests:
+          - not_null
+          - unique
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                inclusive: false
+      - name: first_name
+        tests:
+          - not_null
+          - no_whitespace
+      - name: last_name
+        tests:
+          - not_null
+          - no_whitespace
+      - name: gender
+        tests:
+          - not_null
+          - accepted_values:
+              config:
+                severity: error
+              arguments:
+                values: ['Male', 'Female', 'n/a']
+          - no_whitespace
+      - name: birthdate
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: city
+        tests:
+          - not_null
+          - no_whitespace
+      - name: state
+        tests:
+          - not_null
+          - no_whitespace
+      - name: state_code
+        tests:
+          - not_null
+          - no_whitespace
+          - assert_case:
+              arguments:
+                case: 'lower'
+      - name: country
+        tests:
+          - not_null
+          - no_whitespace
