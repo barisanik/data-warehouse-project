@@ -6,7 +6,7 @@
     Script Purpose: This script loads data into the silver layer utilizing source tables of bronze layer.
 
     Transformation processes:
-    - Mapping of maintenance values. (Y/YES -> Yes, F -> N/NO -> No, NULL -> n/a) 
+    - Mapping of maintenance values. (Y/YES -> Yes, N -> N/NO -> No, NULL -> n/a) 
     
     Run Command: dbt run --select stg_erp__px_cat_g1v2
     Test Command: dbt test --select stg_erp__px_cat_g1v2

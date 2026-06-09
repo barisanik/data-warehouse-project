@@ -6,7 +6,7 @@
     Script Purpose: This script performs transformation and loads data into the silver layer utilizing source tables of bronze layer.
 
     Transformation processes:
-    - Exclusion of invalid sale date (sls_order_dt), shipping date (sls_ship_dt) and due date (sls_due_dt).
+    - Nullification of invalid sale date (sls_order_dt), shipping date (sls_ship_dt) and due date (sls_due_dt).
     - Validation of total sale (sls_sales) amount.
         - Formula: sls_sales = sls_quantity * sls_price
     - Absoluted sale quantity (sls_quantity).
