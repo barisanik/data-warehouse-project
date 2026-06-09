@@ -92,6 +92,10 @@ models:
         tests:
           - not_null
           - no_whitespace
+          - relationships:
+              arguments:
+                to: ref('stg_crm__prd_info')
+                field: prd_key
       - name: sls_cust_id
         tests:
           - not_null
@@ -99,17 +103,38 @@ models:
               arguments:
                 min_value: 0
                 inclusive: false
+          - relationships:
+              arguments:
+                to: ref('stg_crm__cust_info')
+                field: cst_id
       - name: sls_order_dt
         tests:
           - not_null:
               config:
                 severity: warn
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: "'1900-01-01'"
+                max_value: "GETDATE()"
+                inclusive: true
       - name: sls_ship_dt
         tests:
-          - not_null
+          - not_null:
+              config:
+                severity: warn
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: "'1900-01-01'"
+                inclusive: true
       - name: sls_due_dt
         tests:
-          - not_null
+          - not_null:
+              config:
+                severity: warn
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: "'1900-01-01'"
+                inclusive: true
       - name: sls_sales
         tests:
           - not_null
@@ -171,6 +196,11 @@ models:
           - not_null:
               config:
                 severity: warn
+          - dbt_utils.accepted_range:   # Checks if birthday is between 1900-01-01 AND 18 years ago.
+              arguments:
+                min_value: "'1900-01-01'"
+                max_value: "DATEADD(YEAR, -18, GETDATE())"
+                inclusive: true
       - name: gen
         tests:
           - accepted_values:
@@ -242,6 +272,11 @@ models:
           - not_null:
               config:
                 severity: warn
+          - dbt_utils.accepted_range:   # Checks if birthday is between 1900-01-01 AND 18 years ago.
+              arguments:
+                min_value: "'1900-01-01'"
+                max_value: "DATEADD(YEAR, -18, GETDATE())"
+                inclusive: true
       - name: city
         tests:
           - not_null
@@ -256,8 +291,112 @@ models:
           - no_whitespace
           - assert_case:
               arguments:
-                case: 'lower'
+                case: 'upper'
       - name: country
         tests:
           - not_null
           - no_whitespace
+      - name: dwh_create_date
+        tests:
+          - not_null
+  - name: stg_djapi__product
+    description: "Formatted API product records."
+    columns:
+      - name: id
+        tests:
+          - not_null
+          - unique
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                inclusive: false
+      - name: title
+        tests:
+          - not_null
+          - no_whitespace
+          - unique:
+              config:
+                severity: warn
+      - name: category
+        tests:
+          - not_null
+          - no_whitespace
+      - name: pkey
+        tests:
+          - not_null
+          - no_whitespace
+          - assert_length:
+              arguments:
+                  length_limit: 15
+          - not_contains_string:
+              arguments:
+                text: '[_]'
+  - name: stg_djapi__order
+    description: "Formatted API order records."
+    tests:
+      - dbt_utils.unique_combination_of_columns:  # Checks order id - product id combination for each order record.
+          arguments:
+            combination_of_columns:
+              - id
+              - prd_id
+            config:
+              severity: warn
+    columns:
+      - name: id
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                inclusive: false
+      - name: cust_id
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                inclusive: false
+          - relationships:
+              arguments:         
+                to: ref('stg_djapi__customer')
+                field: id
+      - name: prd_id
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                inclusive: false
+          - relationships:  
+              arguments:      
+                to: ref('stg_djapi__product')
+                field: id
+      - name: unit_price
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                inclusive: false
+      - name: quantity
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+                inclusive: true
+      - name: total_price
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                inclusive: false
+          - assert_formula:
+              arguments:
+                column_a: 'unit_price'
+                column_b: 'quantity'
+                op: 'multiply'
+      - name: dwh_create_date
+        tests:
+          - not_null
