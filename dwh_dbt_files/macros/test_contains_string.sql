@@ -18,7 +18,7 @@
 
 	# ============================================================================ #
 */
-{% test not_contains_string(model, column_name, text) %}
+{% test contains_string(model, column_name, text) %}
 
 SELECT {{ column_name }}
 FROM {{ model }}
