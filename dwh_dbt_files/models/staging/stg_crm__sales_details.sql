@@ -40,10 +40,13 @@ cleaned AS (
             WHEN sls_due_dt IS NULL OR sls_due_dt <= 19000000 THEN NULL
             ELSE CAST(CAST(sls_due_dt AS VARCHAR) AS DATE)
         END AS sls_due_dt
-        ,CASE	-- Derived sales amount with (unit price x quantity) formula where the original value is NULL or less than or equal to zero.
-            WHEN ((sls_sales IS NULL OR sls_sales <= 0) AND (sls_price IS NOT NULL)) THEN ABS(ISNULL(sls_quantity,1)) * ABS(sls_price)
+        ,CAST(CASE	-- Derived sales amount with (unit price x quantity) formula where the original value is NULL or less than or equal to zero.
+            WHEN sls_sales IS NULL AND sls_quantity IS NOT NULL AND sls_price IS NOT NULL THEN ABS(sls_price) * ABS(sls_quantity)
+            WHEN (sls_sales != sls_price * sls_quantity) AND (sls_quantity > 0) THEN ABS(sls_price) * sls_quantity
+            WHEN (sls_sales != sls_price * sls_quantity) AND ((sls_quantity = 0) OR (sls_quantity IS NULL)) THEN ABS(sls_price)
+            WHEN (sls_sales != sls_price * sls_quantity) AND (sls_quantity < 0) THEN ABS(sls_price) * ABS(sls_quantity)
             ELSE sls_sales
-        END AS sls_sales
+        END AS DECIMAL(10,2))  AS sls_sales
         ,ABS(ISNULL(sls_quantity,1)) AS sls_quantity -- Avoided zero, negative and null quantity value.
         ,CASE	-- Derived price value with (total sales price / quantity) formula where the original value is NULL, zero, or negative.
             WHEN ((sls_price IS NULL OR sls_price = 0) AND (sls_quantity IS NOT NULL AND ABS(sls_quantity) > 0) AND (sls_sales IS NOT NULL)) THEN CAST(CAST(sls_sales AS DECIMAL(10,2)) / ABS(sls_quantity) AS DECIMAL(10,2))

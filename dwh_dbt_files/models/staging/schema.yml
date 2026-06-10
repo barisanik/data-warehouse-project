@@ -138,7 +138,7 @@ models:
               arguments:
                 min_value: "'1900-01-01'"
                 inclusive: true
-      - name: sls_sales
+      - name: sls_sales                   # total_sales_amount
         tests:
           - not_null
           - dbt_utils.accepted_range:
@@ -152,7 +152,7 @@ models:
               arguments:
                 min_value: 0
                 inclusive: false
-      - name: sls_price
+      - name: sls_price                   # unit_price
         tests:
           - not_null
           - dbt_utils.accepted_range:
@@ -395,7 +395,7 @@ models:
               arguments:      
                 to: ref('stg_djapi__product')
                 field: id
-      - name: unit_price
+      - name: unit_price                          # unit_price
         tests:
           - not_null
           - dbt_utils.accepted_range:
@@ -409,7 +409,7 @@ models:
               arguments:
                 min_value: 1
                 inclusive: true
-      - name: total_price
+      - name: total_price         # total_sales_amount
         tests:
           - not_null
           - dbt_utils.accepted_range:
