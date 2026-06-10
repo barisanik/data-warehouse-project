@@ -31,7 +31,7 @@ cleaned AS (
         ,REPLACE(SUBSTRING(prd_key,1,5),'-','_') AS cat_id  -- Extracted the first 5 characters of product key as category code. Converted dash to underscore to join it with the ERP category table.
         ,SUBSTRING(prd_key, 7, LEN(prd_key)) AS prd_key		-- Extracted the remaining part of the product key, to join with 'sls_prd_key' column of crm_sales_details.
         ,{{ fn_initcap('prd_nm') }}  AS prd_nm
-        ,ISNULL(prd_cost, 0) AS prd_cost                    -- Replaced NULL values with zero.
+        ,CAST(ISNULL(prd_cost, 0) AS DECIMAL(10,2)) AS prd_cost  -- Replaced NULL values with zero.
         ,CASE UPPER(TRIM(prd_line))
             WHEN 'M' THEN 'Mountain'
             WHEN 'R' THEN 'Road'
