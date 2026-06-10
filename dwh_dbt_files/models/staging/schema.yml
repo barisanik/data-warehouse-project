@@ -354,7 +354,7 @@ models:
                   length_limit: 15
           - not_contains_string:
               arguments:
-                text: '[_]'
+                text: '_'
   - name: stg_djapi__order
     description: "Formatted API order records."
     tests:

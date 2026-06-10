@@ -15,7 +15,7 @@
     Test Command: dbt test --select dim_customers
 
     WARNING:
-    - Materialization is set to 'table'. dbt will recreate 'gold.dim_customer' on each run.
+    - Materialization is set to 'view'. dbt will recreate 'gold.dim_customer' on each run.
 */
 
 SELECT
