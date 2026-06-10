@@ -21,8 +21,8 @@ WITH source AS (
 cleaned AS(
     SELECT
         id
-        ,cat
-        ,subcat
+        ,[dbo].[FN_InitCap](TRIM(ISNULL(cat,'N/A'))) AS cat
+        ,[dbo].[FN_InitCap](TRIM(ISNULL(subcat,'N/A'))) AS subcat
         ,CASE UPPER(maintenance)
             WHEN 'YES' THEN 'Yes'
             WHEN 'Y' THEN 'Yes'

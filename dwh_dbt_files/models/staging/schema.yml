@@ -228,10 +228,16 @@ models:
         tests:
           - not_null
           - no_whitespace
+          - assert_case:
+              arguments:
+                case: 'initcap'
       - name: subcat
         tests:
           - not_null
           - no_whitespace
+          - assert_case:
+              arguments:
+                case: 'initcap'
       - name: maintenance
         tests:
           - accepted_values:
