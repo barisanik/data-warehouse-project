@@ -10,8 +10,8 @@
     - stg_erp__px_cat_g1v2
     - stg_djapi__product
     
-    Run Command: dbt run --select dim_product
-    Test Command: dbt test --select dim_product
+    Run Command: dbt run --select dim_products
+    Test Command: dbt test --select dim_products
 
     WARNING:
     - Materialization is set to 'table'. dbt will recreate 'gold.dim_product' on each run.

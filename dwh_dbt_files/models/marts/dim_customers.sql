@@ -11,8 +11,8 @@
     - stg_erp__loc_a101
     - stg_djapi__customer
     
-    Run Command: dbt run --select dim_customer
-    Test Command: dbt test --select dim_customer
+    Run Command: dbt run --select dim_customers
+    Test Command: dbt test --select dim_customers
 
     WARNING:
     - Materialization is set to 'table'. dbt will recreate 'gold.dim_customer' on each run.
