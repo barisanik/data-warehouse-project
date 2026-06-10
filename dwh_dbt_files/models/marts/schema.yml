@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: dim_customer
+  - name: dim_customers
     description: "Unified customer dimension combining CRM CSV and DummyJSON API sources."
     columns:
       - name: customer_key
@@ -32,6 +32,13 @@ models:
         tests:
           - not_null
           - no_whitespace
+      - name: country
+        tests:
+          - accepted_values:
+              config:
+                severity: error
+              arguments:
+                values: ['United States', 'Germany', 'Australia', 'Canada', 'France', 'United Kingdom', 'n/a']
       - name: marital_status
         tests:
           - accepted_values:
@@ -67,7 +74,7 @@ models:
                 severity: error
               arguments:
                 values: ['crm-csv','dummyjson-api']
-  - name: dim_product
+  - name: dim_products
     description: "Unified product dimension combining ERP CSV and DummyJSON API sources."
     columns:
       - name: product_key
@@ -150,3 +157,93 @@ models:
                 severity: error
               arguments:
                 values: ['erp-csv','dummyjson-api']
+  - name: fact_sales
+    description: "Unified order fact combining product and customer dimensions and silver CRM sales and API order sources."
+    columns:
+      - name: order_key
+        tests:
+          - not_null
+          - unique
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                inclusive: false
+      - name: order_number
+        tests:
+          - not_null
+          - no_whitespace
+      - name: product_key
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_products')
+                field: product_key
+      - name: customer_key
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_customers')
+                field: customer_key
+      - name: order_date
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: "'1900-01-01'"
+                max_value: "GETDATE()"
+                inclusive: true
+      - name: shipping_date
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: "'1900-01-01'"
+                inclusive: true
+      - name: due_date
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: "'1900-01-01'"
+                inclusive: true
+      - name: total_sales_amount
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                inclusive: false
+          - assert_formula:
+              arguments:
+                column_a: 'unit_price'
+                column_b: 'quantity'
+                op: 'multiply'
+      - name: quantity
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                inclusive: false
+      - name: unit_price
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                inclusive: false
+      - name: data_source
+        tests:
+          - accepted_values:
+              config:
+                severity: error
+              arguments:
+                values: ['crm-csv','dummyjson-api']
