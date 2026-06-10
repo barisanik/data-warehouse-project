@@ -67,3 +67,86 @@ models:
                 severity: error
               arguments:
                 values: ['crm-csv','dummyjson-api']
+  - name: dim_product
+    description: "Unified product dimension combining ERP CSV and DummyJSON API sources."
+    columns:
+      - name: product_key
+        tests:
+          - not_null
+          - unique
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                inclusive: false
+      - name: product_id
+        tests:
+          - not_null
+          - unique
+          - no_whitespace
+      - name: product_number
+        tests:
+          - not_null
+          - unique
+          - no_whitespace
+          - contains_string:
+              arguments:
+                text: '-'
+      - name: product_name
+        tests:
+          - not_null
+          - unique:
+              config:
+                severity: warn
+      - name: category_id
+        tests:
+          - not_null
+          - assert_case:
+              arguments:
+                case: 'upper'
+      - name: category
+        tests:
+          - not_null
+          - assert_case:
+              arguments:
+                case: 'initcap'
+      - name: subcategory
+        tests:
+          - not_null
+          - assert_case:
+              arguments:
+                case: 'initcap'
+      - name: maintenance
+        tests:
+          - accepted_values:
+              config:
+                severity: error
+              arguments:
+                values: ['Yes', 'No', 'n/a']
+      - name: cost
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                inclusive: true
+      - name: product_line
+        tests:
+          - accepted_values:
+              config:
+                severity: error
+              arguments:
+                values: ['Mountain','Other Sales','Road','Touring','n/a']
+      - name: start_date
+        tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: "'1900-01-01'"
+                max_value: "GETDATE()"
+                inclusive: true
+      - name: data_source
+        tests:
+          - accepted_values:
+              config:
+                severity: error
+              arguments:
+                values: ['erp-csv','dummyjson-api']
