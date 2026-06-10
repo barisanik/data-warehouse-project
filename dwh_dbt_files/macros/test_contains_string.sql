@@ -1,9 +1,9 @@
 /*
 	# ============================================================================ #
-		Macro: not_contains_string
+		Macro: contains_string
 	# ============================================================================ #
-        Purpose: Detects if input value contains given character.
-        Logic: Returns values with unwanted character. dbt marks a test as failed if this query returns any rows.
+        Purpose: Detects if input value does not contain given character.
+        Logic: Returns values without required character. dbt marks a test as failed if this query returns any rows.
 
         Usage on schema.yml:
 
@@ -12,7 +12,7 @@
                 columns:
                 - name: column_name
                     tests:
-                    - not_contains_string:
+                    - contains_string:
                         arguments:
                             text: '-'
 
@@ -24,6 +24,6 @@ SELECT {{ column_name }}
 FROM {{ model }}
 WHERE
     {{ column_name }} IS NOT NULL
-    AND {{ column_name }} LIKE '%' + '{{ text }}' + '%'
+    AND {{ column_name }}   NOT LIKE '%' + '{{ text }}' + '%'
 
 {% endtest %}
