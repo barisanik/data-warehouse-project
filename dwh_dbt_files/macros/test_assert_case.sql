@@ -27,9 +27,11 @@
             {{ column_name }} COLLATE Latin1_General_BIN != UPPER({{ column_name }})
         {% elif case == 'lower' %}
             {{ column_name }} COLLATE Latin1_General_BIN != LOWER({{ column_name }})
+        {% elif case == 'initcap' %}
+            {{ column_name }} COLLATE Latin1_General_BIN != {{ fn_initcap(column_name) }}
         {% else %}
             {{ exceptions.raise_compiler_error(
-                "case argument must be 'upper' or 'lower'. Got: '" ~ case ~ "'"
+                "case argument must be 'upper', 'lower' or 'initcap'. Got: '" ~ case ~ "'"
             ) }}
         {% endif %}
 {% endtest %}

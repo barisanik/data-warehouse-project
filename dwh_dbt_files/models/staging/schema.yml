@@ -57,6 +57,9 @@ models:
         tests:
           - not_null
           - no_whitespace
+          - assert_case:
+              arguments:
+                case: 'initcap'
       - name: prd_cost
         tests:
           - not_null
@@ -281,10 +284,16 @@ models:
         tests:
           - not_null
           - no_whitespace
+          - assert_case:
+              arguments:
+                case: 'initcap'
       - name: state
         tests:
           - not_null
           - no_whitespace
+          - assert_case:
+              arguments:
+                case: 'initcap'
       - name: state_code
         tests:
           - not_null
@@ -296,6 +305,9 @@ models:
         tests:
           - not_null
           - no_whitespace
+          - assert_case:
+              arguments:
+                case: 'initcap'
       - name: dwh_create_date
         tests:
           - not_null
@@ -314,6 +326,9 @@ models:
         tests:
           - not_null
           - no_whitespace
+          - assert_case:
+              arguments:
+                case: 'initcap'
           - unique:
               config:
                 severity: warn
@@ -321,6 +336,9 @@ models:
         tests:
           - not_null
           - no_whitespace
+          - assert_case:
+              arguments:
+                case: 'initcap'
       - name: pkey
         tests:
           - not_null
