@@ -24,6 +24,10 @@
     FROM
         {{ model }}
     WHERE
+        {{ column_name }} IS NOT NULL
+        AND {{ column_a }} IS NOT NULL
+        AND {{ column_b }} IS NOT NULL
+        AND
         {% if op == 'multiply' %}
             {{ column_name }} != {{ column_a }} * {{ column_b }}
         {% elif op == 'divide' %}

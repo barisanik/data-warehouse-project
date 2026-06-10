@@ -24,6 +24,6 @@ SELECT {{ column_name }}
 FROM {{ model }}
 WHERE
     {{ column_name }} IS NOT NULL
-    AND {{ column_name }} LIKE '%' + '{{ text }}' + '%'
+    AND CHARINDEX('{{ text }}', {{ column_name }}) > 0
 
 {% endtest %}
