@@ -1,0 +1,75 @@
+# ============================================================
+#  docker-compose.yml
+#  Purpose: Orchestrates the full data warehouse pipeline.
+#
+#  Run order: sqlserver → sqlserver-setup → ingestion → dbt
+#
+#  Usage:
+#    docker compose up          # run full pipeline
+#    docker compose up dbt      # run only dbt (assumes DB is ready)
+#    docker compose down -v     # stop and delete all data
+# ============================================================
+
+services:
+
+  # ── 1. SQL Server ─────────────────────────────────────────
+  # The database engine. Starts first, other services wait for it.
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_USERNAME: ${SA_USERNAME}
+      SA_PASSWORD: ${SA_PASSWORD}
+      MSSQL_PID: Developer
+    ports:
+      - "1435:1433"                                      # Expose to host for tools like SSMS/DBeaver
+    volumes:
+      - sqlserver_data:/var/opt/mssql                    # Persist database files between restarts
+      - ./datasets:/var/opt/mssql/datasets:ro            # Mount CSV files for BULK INSERT (read-only)
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U \"$SA_USERNAME\" -P \"$SA_PASSWORD\" -C -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s                                  # Give SQL Server time to boot before first check
+
+  # ── 2. Database init ───────────────────────────────────────
+  # Runs SQL scripts once: creates DB, schemas, UDFs, bronze tables, loads CSVs.
+  # Uses the same SQL Server image — no separate install needed.
+  sqlserver-setup:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    volumes:
+      - ./scripts:/scripts                               # Mount scripts folder
+    environment:
+      SA_USERNAME: ${SA_USERNAME}
+      SA_PASSWORD: ${SA_PASSWORD}
+    command: /bin/bash /scripts/init/setup_db.sh
+    restart: on-failure                                  # Retry if SQL Server isn't fully ready yet
+
+  # ── 3. API ingestion ───────────────────────────────────────
+  # Fetches DummyJSON data and loads it into bronze API tables.
+  ingestion:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.ingestion
+    env_file: .env
+    depends_on:
+      sqlserver-setup:
+        condition: service_completed_successfully
+
+  # ── 4. dbt ────────────────────────────────────────────────
+  # Runs Silver and Gold dbt models, then all tests.
+  dbt:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dbt
+    env_file: .env
+    depends_on:
+      ingestion:
+        condition: service_completed_successfully
+
+volumes:
+  sqlserver_data:
