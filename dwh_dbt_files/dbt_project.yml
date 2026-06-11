@@ -23,11 +23,9 @@ models:
       +schema: gold
 tests:
   dwh_dbt_files:
+    +store_failures: true
     +store_failures_as: table
     staging:
-      +store_failures: true
       +schema: audit_stg
     marts:
-      staging:
-      +store_failures: true
       +schema: audit_mrt
