@@ -1,0 +1,15 @@
+dwh_dbt_files:
+  target: dev
+  outputs:
+    dev:
+      type: sqlserver
+      driver: "{{ env_var('DRIVER_NAME', 'ODBC Driver 18 for SQL Server') }}"
+      server: "{{ env_var('SERVER_NAME', 'localhost') }}"
+      port: 1433
+      database: "{{ env_var('DATABASE_NAME', 'DataWarehouse') }}"
+      schema: dbo
+      authentication: sql
+      username: "{{ env_var('SA_USERNAME', 'sa') }}"
+      password: "{{ env_var('SA_PASSWORD') }}"
+      trust_cert: true
+      encrypt: false
