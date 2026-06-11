@@ -1,0 +1,14 @@
+# ============================================================
+#  .env — Docker environment variables
+# ============================================================
+# Rename this file .env to use it.
+# Warning: SA_PASSWORD value needs to be set before run.
+
+# SQL Server
+SA_USERNAME=sa
+SA_PASSWORD=USER_PASSWORD
+SERVER_NAME=sqlserver
+DATABASE_NAME=DataWarehouse
+
+# Python ingestion
+DRIVER_NAME=ODBC Driver 18 for SQL Server
