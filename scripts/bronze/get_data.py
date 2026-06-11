@@ -3,6 +3,7 @@
     Script Purpose: To simulate real-world data quality issues and get data from multiple sources.
 """
 
+import os
 import requests
 import random
 from datetime import datetime
@@ -51,16 +52,20 @@ CORRUPTION_RATE = 0.4
 random.seed(0)
 
 # Database connection parameters
-SERVER_NAME = 'localhost'
-DATABASE_NAME = 'DataWarehouse'
-DRIVER_NAME = "ODBC Driver 18 for SQL Server"
-CONNECTION_STRING = f"""
-    DRIVER={DRIVER_NAME};
-    SERVER={SERVER_NAME};
-    DATABASE={DATABASE_NAME};
-    Trusted_Connection=yes;
-    TrustServerCertificate=yes;
-"""
+SERVER_NAME   = os.environ.get('SERVER_NAME', 'localhost')
+DATABASE_NAME = os.environ.get('DATABASE_NAME', 'DataWarehouse')
+DRIVER_NAME   = os.environ.get('DRIVER_NAME', 'ODBC Driver 18 for SQL Server')
+SA_USERNAME   = os.environ.get('SA_USERNAME')
+SA_PASSWORD   = os.environ.get('SA_PASSWORD')
+
+CONNECTION_STRING = (
+    f"DRIVER={{{DRIVER_NAME}}};"
+    f"SERVER={SERVER_NAME};"
+    f"DATABASE={DATABASE_NAME};"
+    f"UID={SA_USERNAME};"
+    f"PWD={SA_PASSWORD};"
+    f"TrustServerCertificate=yes;"
+)
 
 # Logging parameters
 logging.basicConfig(
