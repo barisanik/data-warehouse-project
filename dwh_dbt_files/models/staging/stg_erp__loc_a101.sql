@@ -22,7 +22,7 @@ WITH source AS (
 cleaned AS (
     SELECT
         REPLACE(cid,'-','') AS cid				-- Remove dash character from id.
-        ,CASE TRIM(UPPER(COALESCE(cntry, '')))	-- Normalize and handle missing or blank country codes.
+        ,CASE TRIM(REPLACE(UPPER(COALESCE(cntry, '')), CHAR(13), ''))	-- Normalize and handle missing or blank country codes.
             WHEN 'US' THEN 'United States'
             WHEN 'USA' THEN 'United States'
             WHEN 'DE' THEN 'Germany'
@@ -33,7 +33,7 @@ cleaned AS (
             WHEN 'FR' THEN 'France'
             WHEN 'UK' THEN 'United Kingdom'
             WHEN '' THEN 'n/a'
-            ELSE TRIM(cntry)
+            ELSE TRIM(REPLACE(cntry, CHAR(13), ''))
         END AS cntry
         ,GETDATE() AS dwh_create_date
     FROM

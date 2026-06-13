@@ -46,7 +46,7 @@ cleaned AS(
         ,[dbo].[FN_InitCap](TRIM(city)) AS city -- Set first character of each word uppercase.
         ,[dbo].[FN_InitCap](TRIM([state])) AS [state] -- Set first character of each word uppercase.
         ,UPPER(TRIM(state_code)) AS state_code -- Convert to uppercase.
-        ,[dbo].[FN_InitCap](TRIM(country)) AS country -- Set first character of each word uppercase.
+        ,[dbo].[FN_InitCap](TRIM(REPLACE(country, CHAR(13), ''))) AS country -- Set first character of each word uppercase.
         ,GETDATE() AS dwh_create_date
     FROM
         source

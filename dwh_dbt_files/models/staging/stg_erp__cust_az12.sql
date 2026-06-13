@@ -30,11 +30,11 @@ cleaned AS (
             WHEN (bdate < '1900-01-01' OR (bdate > DATEADD( YEAR, -18, GETDATE() ))) THEN NULL
             ELSE bdate
         END AS bdate
-        ,CASE UPPER(TRIM(COALESCE(gen,'')))	-- Replace gender values
+        ,CASE UPPER(TRIM(REPLACE(COALESCE(gen,''), CHAR(13), '')))	-- Replace gender values
             WHEN '' THEN 'n/a'
             WHEN 'F' THEN 'Female'
             WHEN 'M' THEN 'Male'
-            ELSE gen
+            ELSE TRIM(REPLACE(gen, CHAR(13), ''))
         END AS gen
         ,GETDATE() AS dwh_create_date
     FROM
