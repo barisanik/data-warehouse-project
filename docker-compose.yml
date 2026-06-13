@@ -139,7 +139,24 @@ services:
     command: airflow scheduler
     env_file: .env
 
+  # ── 9. Metabase ──────────────────────────────────────────
+  # BI and dashboarding tool. Connects to SQL Server gold layer.
+  # UI available at localhost:3000 after startup (~60-90 seconds).
+  metabase:
+    image: metabase/metabase:latest
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    volumes:
+      - metabase_data:/metabase-data
+    environment:
+      MB_DB_TYPE: h2
+      MB_DB_FILE: /metabase-data/metabase.db
+
 volumes:
   sqlserver_data:
   postgres_data:
   airflow_logs:
+  metabase_data:
