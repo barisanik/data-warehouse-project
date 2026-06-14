@@ -78,19 +78,12 @@ logging.basicConfig(
 )
 
 # Defined functions
-def ingest(config: IngestConfig, cursor, rate: float):
-    '''Fetches records from the API, clears the target table, and inserts corrupted data.'''
-
+def extract(config: IngestConfig, rate) -> list[dict]:
+    '''Fetches records from the API and corrupts them.'''
     try:
-        records = fetch_data(config.url, config.main_tag)  
-    except requests.RequestException as e:
-        logging.error(f"API fetch failed for {config.table}: {e}")
-        raise
+        processed_records = []
+        records = fetch_data(config.url, config.main_tag)
 
-    cursor.execute(f"DELETE FROM {config.table}")
-    logging.info(f"DB: Records for {config.table} has been deleted.")
-    
-    try:
         for record in records:
             flat = flatten_data(config.data_type, record)
 
@@ -98,13 +91,27 @@ def ingest(config: IngestConfig, cursor, rate: float):
 
             for row in rows:
                 corrupted = corrupt_record(row, rate)
-                cursor.execute(config.insert_query, config.extract_values(corrupted))
+                processed_records.append(corrupted)
+
+        return processed_records 
+    except requests.RequestException as e:
+        logging.error(f"API fetch failed for {config.table}: {e}")
+        raise
+
+def load(config: IngestConfig, records: list[dict], cursor):
+    '''Clears the target table, and inserts corrupted data.'''
+    try:
+        cursor.execute(f"DELETE FROM {config.table}")
+        logging.info(f"DB: Records for {config.table} has been deleted.")
+
+        for record in records:
+            cursor.execute(config.insert_query, config.extract_values(record))
+
+        logging.info(f"DB: Insert for {config.table} is successful.")
 
     except pyodbc.Error as e:
         logging.error(f"DB insert failed for {config.table}: {e}")
         raise
-
-    logging.info(f"DB: Insert for {config.table} is successful.")
 
 def get_connection():
     return pyodbc.connect(CONNECTION_STRING)
@@ -238,7 +245,8 @@ def main():
             with conn.cursor() as cursor:
                 logging.info("DB connection established.")
                 for config in [PRODUCT_CONFIG, USER_CONFIG, ORDER_CONFIG]:
-                    ingest(config, cursor, CORRUPTION_RATE)
+                    extractOutput = extract(config=config, rate=CORRUPTION_RATE)
+                    load(config=config, records=extractOutput, cursor=cursor)
                 conn.commit()
 
     except Exception as e:
