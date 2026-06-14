@@ -19,7 +19,7 @@ models:
       +materialized: table
       +schema: silver
     marts:
-      +materialized: view
+      +materialized: table
       +schema: gold
 tests:
   dwh_dbt_files:
