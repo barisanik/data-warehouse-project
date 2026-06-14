@@ -1,5 +1,5 @@
 # Veri Ambarı Projesi
-(TR 🇹🇷 | English below)
+(TR 🇹🇷 | [English below](#data-warehouse-project))
 
 Bu proje; SQL Server üzerinde çalışan, analiz süreçleri için tasarlanmış uçtan uca bir veri ambarı (Data Warehouse) oluşturma sürecini ve buna ait SQL sorgularını içermektedir.
 
