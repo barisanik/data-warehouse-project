@@ -1,6 +1,16 @@
 venv/
 __pycache__/
+.pytest_cache/
 *.pyc
 .env
 *.log
 test.py
+*.md
+
+# dwh_dbt_files/.gitignore
+dbt_packages/
+target/
+logs/
+
+# dags/.gitignore
+test_pipeline.py
