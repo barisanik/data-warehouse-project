@@ -6,7 +6,7 @@
 set -e  # Exit immediately on error
 
 SQLCMD="/opt/mssql-tools18/bin/sqlcmd"
-CONN="-S sqlserver -U $SA_USERNAME -P $SA_PASSWORD -C"
+CONN="-S sqlserver -U $SA_USERNAME -P $SA_PASSWORD -C -b"
 
 echo ">>> [1/4] Creating database, schemas and UDFs..."
 $SQLCMD $CONN -i /scripts/init/init_database.sql
