@@ -11,13 +11,6 @@ WARNING:
 USE master;
 GO
 
--- Checks if there is a database named 'DataWarehouse' and drops it if it exists.
-IF EXISTS (SELECT 1 FROM sys.databases WHERE NAME = 'DataWarehouse') BEGIN
-	ALTER DATABASE DataWarehouse SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
-	DROP DATABASE DataWarehouse;
-END
-GO
-
 -- Creates a new database named 'DataWarehouse'.
 IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'DataWarehouse')
     CREATE DATABASE DataWarehouse;
