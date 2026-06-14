@@ -73,7 +73,7 @@ cd docker
 docker compose up -d
 ```
 
-**Arayüz erişim adresleri:**
+**Arayüz Erişim Adresleri & Veritabanı Erişim Bilgileri:**
 
 - Airflow UI: `http://localhost:8080`
 - Metabase UI: `http://localhost:3000`
