@@ -2,7 +2,7 @@
 #  docker-compose.yml
 #  Purpose: Orchestrates the full data warehouse pipeline.
 #
-#  Run order: sqlserver → sqlserver-setup → ingestion → dbt
+#  Run order: Sqlserver → Sqlserver-setup → ingestion → dbt → Airflow Services → Metabase
 #
 #  Usage:
 #    docker compose up          # run full pipeline
@@ -35,7 +35,7 @@ services:
 
   # ── 2. Database init ───────────────────────────────────────
   # Runs SQL scripts once: creates DB, schemas, UDFs, bronze tables, loads CSVs.
-  # Uses the same SQL Server image — no separate install needed.
+  # Uses the same SQL Server image.
   sqlserver-setup:
     image: mcr.microsoft.com/mssql/server:2022-latest
     depends_on:
