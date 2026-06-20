@@ -2,7 +2,7 @@
 #  docker-compose.yml
 #  Purpose: Orchestrates the full data warehouse pipeline.
 #
-#  Run order: Sqlserver → Sqlserver-setup → ingestion → dbt → Airflow Services → Metabase
+#  Run order: Sqlserver → Sqlserver-setup → corruption  → ingestion → dbt → Airflow Services → Metabase
 #
 #  Usage:
 #    docker compose up          # run full pipeline
@@ -49,7 +49,18 @@ services:
     command: /bin/bash /scripts/init/setup_db.sh
     restart: on-failure                                  # Retry if SQL Server isn't fully ready yet
 
-  # ── 3. API ingestion ───────────────────────────────────────
+  # ── 3. Sales Details Corruption ───────────────────────────
+  # Delays sls_ship_dt of bronze.crm_sales_details.
+  corruption:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.corruption
+    env_file: .env
+    depends_on:
+      sqlserver-setup:
+        condition: service_completed_successfully
+
+  # ── 4. API ingestion ───────────────────────────────────────
   # Fetches DummyJSON data and loads it into bronze API tables.
   ingestion:
     build:
@@ -60,7 +71,7 @@ services:
       sqlserver-setup:
         condition: service_completed_successfully
 
-  # ── 4. dbt ────────────────────────────────────────────────
+  # ── 5. dbt ────────────────────────────────────────────────
   # Runs Silver and Gold dbt models, then all tests.
   dbt:
     build:
@@ -70,8 +81,10 @@ services:
     depends_on:
       ingestion:
         condition: service_completed_successfully
+      corruption:
+        condition: service_completed_successfully
 
-# ── 5. Airflow Metadata DB ────────────────────────────────
+# ── 6. Airflow Metadata DB ────────────────────────────────
   # Stores Airflow state: DAG runs, task results, logs.
   postgres:
     image: postgres:15
@@ -86,7 +99,7 @@ services:
       interval: 10s
       retries: 5
 
-# ── 6. Airflow Init ───────────────────────────────────────
+# ── 7. Airflow Init ───────────────────────────────────────
   # Runs once: migrates Airflow DB and creates admin user, then exits.
   airflow-init:
     image: apache/airflow:2.9.1
@@ -99,7 +112,7 @@ services:
     command: bash -c "airflow db migrate && airflow users create --username $${AIRFLOW_ADMIN_USERNAME} --password $${AIRFLOW_ADMIN_PASSWORD} --firstname Admin --lastname User --role Admin --email $${AIRFLOW_ADMIN_EMAIL}"
     env_file: .env
 
-  # ── 7. Airflow Webserver ──────────────────────────────────
+  # ── 8. Airflow Webserver ──────────────────────────────────
   # Serves the Airflow UI at localhost:8080.
   airflow-webserver:
     build:
@@ -120,7 +133,7 @@ services:
     command: airflow webserver
     env_file: .env
 
-  # ── 8. Airflow Scheduler ─────────────────────────────────
+  # ── 9. Airflow Scheduler ─────────────────────────────────
   # Monitors DAGs and triggers tasks when conditions are met.
   airflow-scheduler:
     build:
@@ -139,7 +152,7 @@ services:
     command: airflow scheduler
     env_file: .env
 
-  # ── 9. Metabase ──────────────────────────────────────────
+  # ── 10. Metabase ──────────────────────────────────────────
   # BI and dashboarding tool. Connects to SQL Server gold layer.
   # UI available at localhost:3000 after startup (~60-90 seconds).
   metabase:
