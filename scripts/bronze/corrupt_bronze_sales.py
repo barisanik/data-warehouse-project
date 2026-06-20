@@ -99,10 +99,10 @@ def main() -> None:
     try:
         # Set connection with localhost db.
         conn = get_engine(connection_string=CONNECTION_STRING)
-        sql = "SELECT sls_ord_num, sls_order_dt FROM bronze.crm_sales_details WHERE sls_order_dt > 0"
+        EXTRACT_SQL = "SELECT sls_ord_num, sls_order_dt FROM bronze.crm_sales_details WHERE sls_order_dt > 0"
         
         # Get bronze.crm_sales_details table.
-        df = pd.read_sql_query(sql,conn)
+        df = pd.read_sql_query(EXTRACT_SQL,conn)
 
         # Convert sls_order_dt from int to datetime.
         df['sls_order_dt'] = (pd.to_datetime(df['sls_order_dt'], format="%Y%m%d", errors="coerce"))
@@ -137,7 +137,7 @@ def main() -> None:
         logging.info(f"Temp table temp_crm_sales_details has been created.")
 
         # Update sls_ship_dt of [bronze].[crm_sales_details].
-        sql = """
+        UPDATE_SQL = """
             UPDATE
                 crm
             SET
@@ -151,7 +151,7 @@ def main() -> None:
         """
 
         with conn.connect() as connection:
-            connection.execute(text(sql))
+            connection.execute(text(UPDATE_SQL))
             connection.commit()
 
         logging.info(f"Updated table [bronze].[crm_sales_details].")
