@@ -72,8 +72,8 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(message)s",
     handlers=[
-        logging.StreamHandler(),                        # terminale yaz
-        logging.FileHandler("ingest.log", encoding="utf-8")  # dosyaya da yaz
+        logging.StreamHandler(),                            # enables visibility on console
+        logging.FileHandler("ingest.log", encoding="utf-8") # enables recording on a file
     ]
 )
 
