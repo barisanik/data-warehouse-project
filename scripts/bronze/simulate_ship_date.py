@@ -40,7 +40,7 @@ logging.basicConfig(
     format="%(asctime)s | %(levelname)s | %(message)s",
     handlers=[
         logging.StreamHandler(),                    
-        logging.FileHandler("corrupt_sales_details.log", encoding="utf-8")  
+        logging.FileHandler("simulate_ship_date.log", encoding="utf-8")  
     ]
 )
 
