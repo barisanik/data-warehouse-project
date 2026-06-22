@@ -72,12 +72,17 @@ def simulate_ship_date(order_date: pd.Timestamp,
     shipment_day_diff = 0
     bonus_delay = 0
 
-    if season in [v["name"] for v in season_config.values()]:
-        detected_season_details = next(v for v in season_config.values() if v["name"] == season)
-        shipment_day_diff = random.randint(detected_season_details["ship_range"][0], detected_season_details["ship_range"][1])
-    else:
+    if not 1 <= month <= 12:
+        logging.error(f"Error on function: simulate_ship_date. Invalid month: {month}")
+        raise ValueError(f"Invalid month: {month}")
+
+    if not season in [v["name"] for v in season_config.values()]:
         logging.error(f"Error on function: simulate_ship_date. Invalid season: {season}")
         raise ValueError(f"Invalid season: {season}")
+    else:
+        detected_season_details = next(v for v in season_config.values() if v["name"] == season)
+        shipment_day_diff = random.randint(detected_season_details["ship_range"][0], detected_season_details["ship_range"][1])
+        
     
     if month in QUARTER_START_MONTHS:
         is_outlier = random.choices([True, False], weights=OUTLIER_PROBABILITY)[0]

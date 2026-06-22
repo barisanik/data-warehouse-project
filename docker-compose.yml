@@ -81,7 +81,7 @@ services:
     depends_on:
       ingestion:
         condition: service_completed_successfully
-      corruption:
+      simulation:
         condition: service_completed_successfully
 
 # ── 6. Airflow Metadata DB ────────────────────────────────
