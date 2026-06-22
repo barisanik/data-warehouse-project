@@ -8,10 +8,6 @@ models:
         tests:
           - not_null
           - unique
-          - dbt_utils.accepted_range:
-              arguments:
-                min_value: 0
-                inclusive: false
       - name: customer_id
         tests:
           - not_null
@@ -81,10 +77,6 @@ models:
         tests:
           - not_null
           - unique
-          - dbt_utils.accepted_range:
-              arguments:
-                min_value: 0
-                inclusive: false
       - name: product_id
         tests:
           - not_null
@@ -164,10 +156,6 @@ models:
         tests:
           - not_null
           - unique
-          - dbt_utils.accepted_range:
-              arguments:
-                min_value: 0
-                inclusive: false
       - name: order_number
         tests:
           - not_null

@@ -18,7 +18,7 @@
 */
 
 SELECT
-    ROW_NUMBER() OVER( ORDER BY a.[product_id], a.[data_source]) AS product_key
+    {{ dbt_utils.generate_surrogate_key(['product_id', 'data_source']) }} AS product_key -- Unique hash based surrogate key
     ,CASE
         WHEN [data_source] = 'erp-csv' THEN CONCAT('CSV-', CAST(a.product_id AS VARCHAR(20)))
         WHEN [data_source] = 'dummyjson-api' THEN CONCAT('API-', CAST(a.product_id AS VARCHAR(20)))

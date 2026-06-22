@@ -19,7 +19,7 @@
 */
 
 SELECT
-    ROW_NUMBER() OVER (ORDER BY a.order_number, a.[data_source]) AS order_key
+    {{ dbt_utils.generate_surrogate_key(['order_number', 'product_key','data_source']) }} AS order_key -- Unique hash based surrogate key
     ,CASE
         WHEN [data_source] = 'crm-csv' THEN CONCAT('CSV-', CAST(a.[order_number] AS VARCHAR(20)))
         WHEN [data_source] = 'dummyjson-api' THEN CONCAT('API-', CAST(a.[order_number] AS VARCHAR(20)))
