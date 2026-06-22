@@ -9,5 +9,7 @@ COPY scripts/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY scripts/bronze/simulate_ship_date.py .
+COPY tests/ ./tests/
 
 CMD ["python", "simulate_ship_date.py"]
+CMD ["bash", "-c", "python -m pytest tests/test_simulate_ship_date.py -v && python simulate_ship_date.py"]
