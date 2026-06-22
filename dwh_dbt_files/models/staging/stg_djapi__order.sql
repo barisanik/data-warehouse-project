@@ -24,9 +24,8 @@
 
 WITH source AS (
     SELECT 
-        * 
-    FROM 
-        {{ source('bronze_api', 'djapi_order') }}
+        *
+    FROM {{ source('bronze_api', 'djapi_order') }}
     WHERE
         -- Get order records related with existing product and customer records.
         CAST(TRIM(REPLACE(prd_id,'dummy-','')) AS INT) IN (SELECT id FROM {{ ref('stg_djapi__product') }})
@@ -34,6 +33,17 @@ WITH source AS (
         -- Avoid records with wrong unit price.
         AND unit_price IS NOT NULL 
         AND unit_price > 0
+),
+deduped AS (
+    SELECT
+        *
+        ,ROW_NUMBER() OVER (
+            PARTITION BY 
+                CAST(TRIM(REPLACE(id,'dummy-','')) AS INT)
+                ,CAST(TRIM(REPLACE(prd_id,'dummy-','')) AS INT)
+            ORDER BY total_price DESC
+        ) AS rn
+    FROM source
 ),
 cleaned AS(
     SELECT
@@ -55,7 +65,9 @@ cleaned AS(
         END AS total_price
         ,GETDATE() AS dwh_create_date
     FROM
-        source
+        deduped
+    WHERE
+        rn = 1
 )
 
 SELECT * FROM cleaned
