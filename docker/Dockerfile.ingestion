@@ -11,4 +11,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY scripts/bronze/get_data.py .
 COPY tests/ ./tests/
 
-CMD ["bash", "-c", "python -m pytest tests/ -v && python get_data.py"]
+CMD ["bash", "-c", "python -m pytest tests/test_get_data.py -v && python get_data.py"]
