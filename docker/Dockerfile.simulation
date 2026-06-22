@@ -1,0 +1,13 @@
+# Dockerfile.simulation
+# Purpose: Container for simulate_ship_date.py. Delays sls_ship_dt of bronze.crm_sales_details.
+
+FROM dwh-base:latest
+
+WORKDIR /app
+
+COPY scripts/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY scripts/bronze/simulate_ship_date.py .
+
+CMD ["python", "simulate_ship_date.py"]

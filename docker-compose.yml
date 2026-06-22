@@ -49,12 +49,12 @@ services:
     command: /bin/bash /scripts/init/setup_db.sh
     restart: on-failure                                  # Retry if SQL Server isn't fully ready yet
 
-  # ── 3. Sales Details Corruption ───────────────────────────
+  # ── 3. Sales Ship Date Simulation ───────────────────────────
   # Delays sls_ship_dt of bronze.crm_sales_details.
-  corruption:
+  simulation:
     build:
       context: .
-      dockerfile: docker/Dockerfile.corruption
+      dockerfile: docker/Dockerfile.simulation
     env_file: .env
     depends_on:
       sqlserver-setup:
