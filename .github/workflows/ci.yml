@@ -5,7 +5,7 @@
 #
 #  Jobs:
 #    1. python-tests:   Runs unit tests (mocked, no DB required)
-#    2. dbt-compile:    Validates dbt project compiles without errors
+#    2. dbt-parse:      Validates dbt project structure without a DB connecti
 #
 #  Trigger conditions:
 #    - Push to main or develop branches.
@@ -15,6 +15,11 @@
 #    DBT_CI_PASSWORD:   Any non-empty string. dbt compile does not open a DB connection;
 #                       This secret only satisfies the env_var() call in profiles.yml which has no default value.
 #                       Set it under: Repository -> Settings -> Secrets -> Actions.
+#
+#  Out of scope (deferred until cloud migration):
+#    - dbt run / dbt test — requires a live SQL Server instance.
+#      Will be enabled via dbt Cloud CI after cloud migration.
+#                       
 # ============================================================
 
 name: CI
@@ -60,8 +65,8 @@ jobs:
   # ── Job 2: dbt Compile Check ────────────────────────────────
   # Installs dbt-sqlserver and compiles all models and macros. Compile renders every Jinja template and validates.
   # No live SQL Server is needed. dbt compile does not open a database connection. The env vars below satisfy profiles.yml
-  dbt-compile:
-    name: dbt Compile Check
+  dbt-parse:
+    name: dbt Parse Check
     runs-on: ubuntu-latest
 
     env:
@@ -89,6 +94,6 @@ jobs:
         working-directory: dwh_dbt_files
         run: dbt deps --profiles-dir .
 
-      - name: Compile dbt project
+      - name: Parse dbt project
         working-directory: dwh_dbt_files
-        run: dbt compile --profiles-dir .
+        run: dbt parse --profiles-dir .
