@@ -6,11 +6,16 @@ __pycache__/
 *.log
 test.py
 *.md
+.vscode/
 
 # dwh_dbt_files/.gitignore
 dbt_packages/
 target/
 logs/
+.user.yml
 
 # dags/.gitignore
 test_pipeline.py
+
+# keys/ .gitignore
+*.json
