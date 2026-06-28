@@ -18,7 +18,6 @@
 #
 #  Out of scope (deferred until cloud migration):
 #    - dbt run / dbt test — requires a live SQL Server instance.
-#      Will be enabled via dbt Cloud CI after cloud migration.
 #                       
 # ============================================================
 
@@ -62,19 +61,12 @@ jobs:
             -v --tb=short
 
 
-  # ── Job 2: dbt Compile Check ────────────────────────────────
-  # Installs dbt-sqlserver and compiles all models and macros. Compile renders every Jinja template and validates.
-  # No live SQL Server is needed. dbt compile does not open a database connection. The env vars below satisfy profiles.yml
+  # ── Job 2: dbt Parse Check ────────────────────────────────
+  # Installs dbt-bigquery and parses all models and macros. dbt parse renders every Jinja template and validates model/source references.
+  # No live BigQuery connection is needed — a dummy profiles.yml is created inline.
   dbt-parse:
     name: dbt Parse Check
     runs-on: ubuntu-latest
-
-    env:
-      SERVER_NAME:   localhost
-      DATABASE_NAME: DataWarehouse
-      DRIVER_NAME:   "ODBC Driver 18 for SQL Server"
-      SA_USERNAME:   sa
-      SA_PASSWORD:   ${{ secrets.DBT_CI_PASSWORD }}
 
     steps:
       - name: Checkout repository
@@ -85,11 +77,27 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install dbt-sqlserver
-        run: pip install dbt-sqlserver==1.9.2
+      - name: Install dbt-bigquery
+        run: pip install dbt-bigquery==1.11.3
 
-      # profiles.yml lives inside dwh_dbt_files/ (mirroring Dockerfile.dbt).
-      # --profiles-dir . tells dbt to look for it in the working directory.
+      # Creates a dummy profiles.yml inside dwh_dbt_files/ for CI.
+      # dbt parse does not open a BigQuery connection, so dummy values are sufficient.
+      - name: Create dbt profiles.yml
+        run: |
+          cat > dwh_dbt_files/profiles.yml << 'EOF'
+          dwh_dbt_files:
+            target: dev
+            outputs:
+              dev:
+                type: bigquery
+                method: service-account
+                project: ci-dummy-project
+                dataset: silver
+                keyfile: /dev/null
+                location: EU
+                threads: 4
+          EOF
+
       - name: Install dbt packages
         working-directory: dwh_dbt_files
         run: dbt deps --profiles-dir .
