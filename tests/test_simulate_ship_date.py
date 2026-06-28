@@ -5,12 +5,11 @@ import os
 import pytest
 import pandas as pd
 import datetime
-from sqlalchemy import Engine
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'scripts', 'bronze'))
 
 from unittest.mock import patch, MagicMock
-from simulate_ship_date import extract, transform, load, SEASON_CONFIG, simulate_ship_date, extract, transform, load
+from simulate_ship_date import extract, transform, load, SEASON_CONFIG, simulate_ship_date
 
 ## Function test: simulate_ship_date (ssd)
 # ssd - Happy path
@@ -93,22 +92,22 @@ def test_dropna_function_transform():
 ## extract - Happy path
 
 def test_extract():
-    conn = MagicMock()
+    client = MagicMock()
+    client.query.return_value.to_dataframe.return_value = pd.DataFrame({
+        'sls_ord_num': ['SO001'],
+        'sls_order_dt': [20250615]
+    })
 
-    with patch('simulate_ship_date.pd.read_sql_query') as mock_read:
-        mock_read.return_value = pd.DataFrame({
-            'sls_ord_num': ['SO001'],
-            'sls_order_dt': [20250615]
-        })
-        result = extract(conn=conn)
-                         
-        assert isinstance(result, pd.DataFrame)
-        assert len(result) > 0
+    result = extract(client=client)
+                     
+    assert isinstance(result, pd.DataFrame)
+    assert len(result) > 0
 
 # extract - Negative cases
 
 def test_extract_raises_on_db_failure():
-    with patch('simulate_ship_date.pd.read_sql_query') as mock_read:
-        mock_read.side_effect = Exception("DB connection failed")
-        with pytest.raises(Exception):
-            extract(conn=MagicMock())
+    client = MagicMock()
+    client.query.side_effect = Exception("BQ connection failed")
+
+    with pytest.raises(Exception):
+        extract(client=client)

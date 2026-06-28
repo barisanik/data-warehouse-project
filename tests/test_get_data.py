@@ -30,17 +30,24 @@ def test_extract_returns_list():
         assert len(result) > 0
         assert isinstance(result[0], dict)
 
-def test_load_executes_cursor():
-    cursor = MagicMock()
+def test_load_calls_bq_client():
+    client = MagicMock()
+
+    # Simulate job.result() returning successfully
+    mock_job = MagicMock()
+    client.load_table_from_dataframe.return_value = mock_job
+
     records = [
         {
             'id': 1,
             'title': 'Test Product',
             'category': 'test-category',
-            'sku': 'ABC-123',
-            'productCreatedAt': '2024-01-01',
-            'source': 'api-dummyjson'
+            'pkey': 'ABC-123',
+            'createdAt': '2024-01-01',
         }
     ]
-    load(PRODUCT_CONFIG, records, cursor)
-    assert cursor.execute.call_count == 2  # 1 DELETE + 1 INSERT
+
+    load(PRODUCT_CONFIG, records, client)
+
+    client.load_table_from_dataframe.assert_called_once()
+    mock_job.result.assert_called_once()  # Ensures job completion is awaited
