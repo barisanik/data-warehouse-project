@@ -23,20 +23,20 @@ WITH source AS (
 cleaned AS (
     SELECT
         CASE								-- Remove 'NAS' prefix
-            WHEN cid LIKE 'NAS%' THEN SUBSTRING(cid, 4, LEN(cid)) 
+            WHEN cid LIKE 'NAS%' THEN SUBSTR(cid, 4, LENGTH(cid))
             ELSE cid
-        END AS cid 
+        END AS cid
         ,CASE								-- Set future and out-of-range birthday dates to NULL.
-            WHEN (bdate < '1900-01-01' OR (bdate > DATEADD( YEAR, -18, GETDATE() ))) THEN NULL
-            ELSE bdate
+            WHEN (SAFE_CAST(bdate AS DATE) < '1900-01-01' OR SAFE_CAST(bdate AS DATE) > DATE_SUB(CURRENT_DATE(), INTERVAL 18 YEAR)) THEN NULL
+            ELSE SAFE_CAST(bdate AS DATE)
         END AS bdate
-        ,CASE UPPER(TRIM(REPLACE(COALESCE(gen,''), CHAR(13), '')))	-- Replace gender values
+        ,CASE UPPER(TRIM(REPLACE(COALESCE(gen,''), '\r', '')))	-- Replace gender values
             WHEN '' THEN 'n/a'
             WHEN 'F' THEN 'Female'
             WHEN 'M' THEN 'Male'
-            ELSE TRIM(REPLACE(gen, CHAR(13), ''))
+            ELSE TRIM(REPLACE(gen, '\r', ''))
         END AS gen
-        ,GETDATE() AS dwh_create_date
+        ,CURRENT_TIMESTAMP() AS dwh_create_date
     FROM
         source
 )

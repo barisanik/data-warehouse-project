@@ -21,8 +21,8 @@ WITH source AS (
 cleaned AS(
     SELECT
         id
-        ,[dbo].[FN_InitCap](TRIM(ISNULL(cat,'N/A'))) AS cat
-        ,[dbo].[FN_InitCap](TRIM(ISNULL(subcat,'N/A'))) AS subcat
+        ,INITCAP(IFNULL(cat,'N/A')) AS cat
+        ,INITCAP(IFNULL(subcat,'N/A')) AS subcat
         ,CASE UPPER(maintenance)
             WHEN 'YES' THEN 'Yes'
             WHEN 'Y' THEN 'Yes'
@@ -30,7 +30,7 @@ cleaned AS(
             WHEN 'N' THEN 'No'
             ELSE 'n/a'
         END AS maintenance
-        ,GETDATE() AS dwh_create_date
+        ,CURRENT_TIMESTAMP() AS dwh_create_date
     FROM
         source
 )

@@ -22,15 +22,15 @@ WITH source AS (
 ),
 cleaned AS(
     SELECT
-        CAST(TRIM(REPLACE(id,'dummy-','')) AS INT) AS id -- Clear prefix.
-        ,[dbo].[FN_InitCap](TRIM(title)) AS title -- Set first character of each word uppercase.
-        ,[dbo].[FN_InitCap](TRIM(REPLACE(ISNULL(category,'n/a'),'-',' '))) AS category -- Set first character of each word uppercase.
+        CAST(TRIM(REPLACE(id,'dummy-','')) AS INT64) AS id -- Clear prefix.
+        ,{{ fn_initcap('title') }} AS title -- Set first character of each word uppercase.
+        ,INITCAP(REPLACE(IFNULL(category,'n/a'),'-',' ')) AS category -- Set first character of each word uppercase.
         ,CASE 
-            WHEN LEN(pkey) > 15 THEN SUBSTRING(UPPER(REPLACE(TRIM(pkey),'_','-')), 0, 16) -- Clear suffix
+            WHEN LENGTH(pkey) > 15 THEN SUBSTRING(UPPER(REPLACE(TRIM(pkey),'_','-')), 1, 15) -- Clear suffix
             ELSE UPPER(REPLACE(TRIM(pkey),'_','-')) 
         END AS pkey
         ,createdAt
-        ,GETDATE() AS dwh_create_date
+        ,CURRENT_TIMESTAMP() AS dwh_create_date
     FROM
         source
     WHERE	

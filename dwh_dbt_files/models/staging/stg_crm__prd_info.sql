@@ -29,9 +29,9 @@ cleaned AS (
     SELECT 
         prd_id
         ,REPLACE(SUBSTRING(prd_key,1,5),'-','_') AS cat_id  -- Extracted the first 5 characters of product key as category code. Converted dash to underscore to join it with the ERP category table.
-        ,SUBSTRING(prd_key, 7, LEN(prd_key)) AS prd_key		-- Extracted the remaining part of the product key, to join with 'sls_prd_key' column of crm_sales_details.
+        ,SUBSTRING(prd_key, 7, LENGTH(prd_key)) AS prd_key		-- Extracted the remaining part of the product key, to join with 'sls_prd_key' column of crm_sales_details.
         ,{{ fn_initcap('prd_nm') }}  AS prd_nm
-        ,CAST(ISNULL(prd_cost, 0) AS DECIMAL(10,2)) AS prd_cost  -- Replaced NULL values with zero.
+        ,CAST(IFNULL(NULLIF(prd_cost, ''), '0') AS NUMERIC) AS prd_cost  -- Replaced NULL values with zero.
         ,CASE UPPER(TRIM(prd_line))
             WHEN 'M' THEN 'Mountain'
             WHEN 'R' THEN 'Road'
@@ -40,8 +40,8 @@ cleaned AS (
             ELSE 'n/a'
         END AS prd_line
         ,CAST(prd_start_dt AS DATE) AS prd_start_dt         -- Casted to DATE because the column does not contain time component.
-        ,CAST(LEAD(prd_start_dt) OVER (PARTITION BY prd_key ORDER BY prd_start_dt) - 1 AS DATE) AS prd_end_dt -- Calculated the production end date as one day prior to the next production start date. Casted to DATE for consistency.
-        ,GETDATE() AS dwh_create_date
+        ,DATE_SUB(CAST(LEAD(prd_start_dt) OVER (PARTITION BY prd_key ORDER BY prd_start_dt) AS DATE), INTERVAL 1 DAY) AS prd_end_dt -- Calculated the production end date as one day prior to the next production start date. Casted to DATE for consistency.
+        ,CURRENT_TIMESTAMP() AS dwh_create_date
     FROM 
         source
 )

@@ -24,15 +24,9 @@ WITH source AS (
 ),
 cleaned AS(
     SELECT
-        CAST(TRIM(REPLACE(id,'dummy-','')) AS INT) AS id -- Clear prefix.
-        ,CASE 
-            WHEN first_name IS NULL THEN 'n/a' -- Replace NULL value with string 'n/a'.
-            ELSE UPPER(LEFT(TRIM(first_name), 1)) + LOWER(SUBSTRING(TRIM(first_name), 2, LEN(first_name))) -- Set first character as uppercase and rest of it lowercase.
-        END AS first_name
-        ,CASE 
-            WHEN last_name IS NULL THEN 'n/a' -- Replace NULL value with string 'n/a'.
-            ELSE UPPER(LEFT(TRIM(last_name), 1)) + LOWER(SUBSTRING(TRIM(last_name), 2, LEN(last_name))) -- Set first character as uppercase and rest of it lowercase.
-        END AS last_name
+        CAST(TRIM(REPLACE(id,'dummy-','')) AS INT64) AS id -- Clear prefix.
+        ,IFNULL({{ fn_initcap('first_name') }}, 'n/a') AS first_name
+        ,IFNULL({{ fn_initcap('last_name') }}, 'n/a') AS last_name
         ,CASE 
             WHEN (gender IS NULL OR gender = '') THEN 'n/a' -- Replace NULL value or empty string with string 'n/a'.
             WHEN UPPER(TRIM(gender)) IN ('M','MALE') THEN 'Male'
@@ -40,14 +34,14 @@ cleaned AS(
             ELSE 'n/a'
         END AS gender
         ,CASE								-- Set future and out-of-range birthday dates to NULL.
-            WHEN (birthdate < '1900-01-01' OR (birthdate > DATEADD( YEAR, -18, GETDATE() ))) THEN NULL
-            ELSE birthdate
+            WHEN (SAFE_CAST(birthdate AS DATE) < '1900-01-01' OR SAFE_CAST(birthdate AS DATE) > DATE_SUB(CURRENT_DATE(), INTERVAL 18 YEAR)) THEN NULL
+            ELSE SAFE_CAST(birthdate AS DATE)
         END AS birthdate
-        ,[dbo].[FN_InitCap](TRIM(city)) AS city -- Set first character of each word uppercase.
-        ,[dbo].[FN_InitCap](TRIM([state])) AS [state] -- Set first character of each word uppercase.
+        ,{{ fn_initcap('city') }} AS city -- Set first character of each word uppercase.
+        ,{{ fn_initcap('state') }} AS state -- Set first character of each word uppercase.
         ,UPPER(TRIM(state_code)) AS state_code -- Convert to uppercase.
-        ,[dbo].[FN_InitCap](TRIM(REPLACE(country, CHAR(13), ''))) AS country -- Set first character of each word uppercase.
-        ,GETDATE() AS dwh_create_date
+        ,INITCAP(REPLACE(country, '\r', '')) AS country -- Set first character of each word uppercase.
+        ,CURRENT_TIMESTAMP() AS dwh_create_date
     FROM
         source
 )

@@ -28,28 +28,37 @@ WITH source AS (
     FROM {{ source('bronze_api', 'djapi_order') }}
     WHERE
         -- Get order records related with existing product and customer records.
-        CAST(TRIM(REPLACE(prd_id,'dummy-','')) AS INT) IN (SELECT id FROM {{ ref('stg_djapi__product') }})
-        AND CAST(TRIM(REPLACE(cust_id,'dummy-','')) AS INT) IN (SELECT id FROM {{ ref('stg_djapi__customer') }})
+        CAST(TRIM(REPLACE(prd_id,'dummy-','')) AS INT64) IN (SELECT id FROM {{ ref('stg_djapi__product') }})
+        AND CAST(TRIM(REPLACE(cust_id,'dummy-','')) AS INT64) IN (SELECT id FROM {{ ref('stg_djapi__customer') }})
         -- Avoid records with wrong unit price.
         AND unit_price IS NOT NULL 
-        AND unit_price > 0
+        AND SAFE_CAST(unit_price AS FLOAT64) > 0
 ),
 deduped AS (
     SELECT
         *
         ,ROW_NUMBER() OVER (
             PARTITION BY 
-                CAST(TRIM(REPLACE(id,'dummy-','')) AS INT)
-                ,CAST(TRIM(REPLACE(prd_id,'dummy-','')) AS INT)
-            ORDER BY total_price DESC
+                CAST(TRIM(REPLACE(id,'dummy-','')) AS INT64)
+                ,CAST(TRIM(REPLACE(prd_id,'dummy-','')) AS INT64)
+            ORDER BY SAFE_CAST(total_price AS FLOAT64) DESC
         ) AS rn
     FROM source
 ),
+casted AS (
+    SELECT
+        id, prd_id, cust_id
+        ,SAFE_CAST(unit_price AS FLOAT64)  AS unit_price
+        ,SAFE_CAST(quantity AS INT64)       AS quantity
+        ,SAFE_CAST(total_price AS FLOAT64)  AS total_price
+    FROM deduped
+    WHERE rn = 1
+),
 cleaned AS(
     SELECT
-	    CAST(TRIM(REPLACE(id,'dummy-','')) AS INT) AS id -- Clear prefix.
-        ,CAST(TRIM(REPLACE(prd_id,'dummy-','')) AS INT) AS prd_id -- Clear prefix.
-        ,CAST(TRIM(REPLACE(cust_id,'dummy-','')) AS INT) AS cust_id -- Clear prefix.
+	    CAST(TRIM(REPLACE(id,'dummy-','')) AS INT64) AS id -- Clear prefix.
+        ,CAST(TRIM(REPLACE(prd_id,'dummy-','')) AS INT64) AS prd_id -- Clear prefix.
+        ,CAST(TRIM(REPLACE(cust_id,'dummy-','')) AS INT64) AS cust_id -- Clear prefix.
         ,unit_price 
         ,CASE	-- Normalize quantity
             WHEN quantity = 0 OR quantity IS NULL THEN 1
@@ -63,11 +72,9 @@ cleaned AS(
             WHEN (total_price != unit_price * quantity) AND (quantity < 0) THEN unit_price * ABS(quantity)
             ELSE total_price
         END AS total_price
-        ,GETDATE() AS dwh_create_date
+        ,CURRENT_TIMESTAMP() AS dwh_create_date
     FROM
-        deduped
-    WHERE
-        rn = 1
+        casted
 )
 
 SELECT * FROM cleaned
