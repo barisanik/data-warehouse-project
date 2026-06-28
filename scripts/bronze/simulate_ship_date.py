@@ -1,27 +1,16 @@
 import pandas as pd
 import os
-from sqlalchemy import create_engine, text, Engine
+from google.cloud import bigquery
 import logging
 import random
 from datetime import datetime
-import urllib.parse
+from dotenv import load_dotenv
+
+load_dotenv()
 
 ### Initial parameters ###
-# Database connection parameters
-SERVER   = os.environ.get('SERVER_NAME', 'localhost')
-DATABASE = os.environ.get('DATABASE_NAME', 'DataWarehouse')
-DRIVER   = os.environ.get('DRIVER_NAME', 'ODBC Driver 18 for SQL Server')
-USERNAME   = os.environ.get('SA_USERNAME')
-PASSWORD   = os.environ.get('SA_PASSWORD')
-
-CONNECTION_STRING = (
-    f"DRIVER={{{DRIVER}}};"
-    f"SERVER={SERVER};"
-    f"DATABASE={DATABASE};"
-    f"UID={USERNAME};"
-    f"PWD={PASSWORD};"
-    f"TrustServerCertificate=yes;"
-)
+# BigQuery connection parameters
+PROJECT_ID = os.environ.get('GCP_PROJECT_ID')
 
 SEASON_CONFIG = {
     1: { "name": "Winter", "ship_range": (14, 30), "cap_divisor": 4 },
@@ -54,14 +43,8 @@ def log_event(phase_name: str, log_type: str) -> None:
     
     logging.info(f"{phase_name} phase {log_type} at {timestamp}")
 
-def get_engine(connection_string: str):
-    try:
-        params = urllib.parse.quote_plus(connection_string)
-        engine = create_engine(f"mssql+pyodbc:///?odbc_connect={params}")
-        return engine
-    except Exception as e:
-        logging.error(f"Error on function: get_engine. Details: {e}")
-        raise
+def get_client() -> bigquery.Client:
+    return bigquery.Client(project=PROJECT_ID)
 
 def simulate_ship_date(order_date: pd.Timestamp,
                        month: int, 
@@ -98,13 +81,17 @@ def simulate_ship_date(order_date: pd.Timestamp,
     
     return order_date + pd.DateOffset(days=total_delay)
 
-def extract(conn: Engine) -> pd.DataFrame:
+def extract(client: bigquery.Client) -> pd.DataFrame:
     '''Fetches records from the bronze.crm_sales_details.'''
 
-    EXTRACT_SQL = "SELECT sls_ord_num, sls_order_dt FROM bronze.crm_sales_details WHERE sls_order_dt > 0"
+    EXTRACT_SQL = f"""
+        SELECT sls_ord_num, sls_order_dt
+        FROM `{PROJECT_ID}.bronze.crm_sales_details`
+        WHERE SAFE_CAST(sls_order_dt AS INT64) > 0
+    """
     
     # Get bronze.crm_sales_details table.
-    df = pd.read_sql_query(EXTRACT_SQL,conn)
+    df = client.query(EXTRACT_SQL).to_dataframe()
     logging.info(f"Ingested {len(df)} lines of record.")
     return df
 
@@ -139,32 +126,30 @@ def transform(df: pd.DataFrame, season_config) -> pd.DataFrame:
     
     return df
     
-def load(df: pd.DataFrame, conn: Engine):
+def load(df: pd.DataFrame, client: bigquery.Client) -> None:
     '''Update sls_ship_dt column values of bronze.crm_sales_details.'''
 
-    # Loads dataframe to bronze.temp_crm_sales_details.
-    df.to_sql("temp_crm_sales_details", conn, schema="bronze", if_exists="replace")
+    # Loads simulated dates to a temp table.
+    temp_table_ref = f"{PROJECT_ID}.bronze.temp_crm_sales_details"
+    job_config = bigquery.LoadJobConfig(write_disposition="WRITE_TRUNCATE")
+    job = client.load_table_from_dataframe(
+        df[['sls_ord_num', 'simulated_ship_dt']], temp_table_ref, job_config=job_config
+    )
+    job.result()
     logging.info(f"Temp table temp_crm_sales_details has been created.")
 
-    # Update sls_ship_dt of [bronze].[crm_sales_details].
-    UPDATE_SQL = """
-        UPDATE
-            crm
-        SET
-            crm.sls_ship_dt = temp.simulated_ship_dt
-        FROM
-            [bronze].[crm_sales_details] crm
-            JOIN [bronze].[temp_crm_sales_details] temp ON crm.sls_ord_num = temp.sls_ord_num
-        WHERE
-            crm.sls_ord_num IS NOT NULL
-            AND temp.sls_ord_num IS NOT NULL
+    # Update sls_ship_dt of bronze.crm_sales_details via MERGE.
+    # BigQuery does not support UPDATE with JOIN; MERGE is the equivalent pattern.
+    MERGE_SQL = f"""
+        MERGE `{PROJECT_ID}.bronze.crm_sales_details` AS crm
+        USING `{PROJECT_ID}.bronze.temp_crm_sales_details` AS temp
+        ON crm.sls_ord_num = temp.sls_ord_num
+        WHEN MATCHED THEN
+            UPDATE SET crm.sls_ship_dt = temp.simulated_ship_dt
     """
 
-    with conn.connect() as connection:
-        connection.execute(text(UPDATE_SQL))
-        connection.commit()
-
-    logging.info(f"Updated table [bronze].[crm_sales_details].")
+    client.query(MERGE_SQL).result()
+    logging.info(f"Updated table bronze.crm_sales_details.")
 
 # --- Main ---
 def main() -> None:
@@ -174,11 +159,10 @@ def main() -> None:
     log_event(phase_name="Script", log_type="start")
     
     try:
-        # Set connection with localhost db.
-        conn = get_engine(connection_string=CONNECTION_STRING)
+        client = get_client()
 
         log_event(phase_name="Extraction", log_type="start")
-        df = extract(conn=conn)
+        df = extract(client=client)
         log_event(phase_name="Extraction", log_type="end")
 
         log_event(phase_name="Transform", log_type="start")
@@ -186,7 +170,7 @@ def main() -> None:
         log_event(phase_name="Transform", log_type="end")
 
         log_event(phase_name="Load", log_type="start")
-        load(df=df, conn=conn)
+        load(df=df, client=client)
         log_event(phase_name="Load", log_type="end")
 
     except Exception as e:
