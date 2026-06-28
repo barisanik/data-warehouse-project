@@ -2,9 +2,10 @@
 	# ============================================================================ #
 		Macro: assert_case
 	# ============================================================================ #
-        Purpose: Validates that all non-null values in a column are fully uppercased or lowercased.
-        Logic:  Returns rows where the value does not match the expected case. Uses COLLATE Latin1_General_BIN to enforce case-sensitive 
-                comparison on SQL Server's default CI collation. dbt marks a test as failed if this query returns any rows.
+        Purpose: Validates that all non-null values in a column are fully uppercased, lowercased or initcapped.
+        Logic:  Returns rows where the value does not match the expected case.
+                BigQuery string comparisons are case-sensitive by default, so COLLATE is not needed.
+                dbt marks a test as failed if this query returns any rows.
 
         Usage on schema.yml:
             models:
@@ -13,7 +14,7 @@
                   - name: column_name
                     tests:
                       - assert_case:
-                          case: 'upper'   # 'upper' | 'lower'
+                          case: 'upper'   # 'upper' | 'lower' | 'initcap'
         
 	# ============================================================================ #
 */
@@ -24,11 +25,11 @@
         {{ model }}
     WHERE
         {% if case == 'upper' %}
-            {{ column_name }} COLLATE Latin1_General_BIN != UPPER({{ column_name }})
+            {{ column_name }} != UPPER({{ column_name }})
         {% elif case == 'lower' %}
-            {{ column_name }} COLLATE Latin1_General_BIN != LOWER({{ column_name }})
+            {{ column_name }} != LOWER({{ column_name }})
         {% elif case == 'initcap' %}
-            {{ column_name }} COLLATE Latin1_General_BIN != {{ fn_initcap(column_name) }}
+            {{ column_name }} != {{ fn_initcap(column_name) }}
         {% else %}
             {{ exceptions.raise_compiler_error(
                 "case argument must be 'upper', 'lower' or 'initcap'. Got: '" ~ case ~ "'"

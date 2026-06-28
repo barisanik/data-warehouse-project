@@ -24,6 +24,6 @@ SELECT {{ column_name }}
 FROM {{ model }}
 WHERE
     {{ column_name }} IS NOT NULL
-    AND CHARINDEX('{{ text }}', {{ column_name }}) = 0
+    AND STRPOS({{ column_name }}, '{{ text }}') = 0
 
 {% endtest %}

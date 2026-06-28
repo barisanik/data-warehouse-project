@@ -22,6 +22,6 @@ SELECT {{ column_name }}
 FROM {{ model }}
 WHERE
     {{ column_name }} IS NOT NULL
-    AND LEN({{ column_name }}) != LEN(TRIM({{ column_name }}))
+    AND LENGTH({{ column_name }}) != LENGTH(TRIM({{ column_name }}))
 
 {% endtest %}

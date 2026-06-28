@@ -14,9 +14,12 @@
                 tests:
                 - matches_pattern:
                     arguments:
-                        pattern: '__[_]__'
+                        pattern: '^.{2}_.{2}$'
 
         Expected input for pass: 'AB_CD'
+
+        Note: Pattern argument must be a regular expression (BigQuery REGEXP_CONTAINS).
+              Previously used T-SQL LIKE syntax (e.g. '__[_]__') is not compatible.
 
 	# ============================================================================ #
 */
@@ -27,6 +30,6 @@ SELECT {{ column_name }}
 FROM {{ model }}
 WHERE
     {{ column_name }} IS NOT NULL
-    AND {{ column_name }} NOT LIKE '{{ pattern }}'
+    AND NOT REGEXP_CONTAINS({{ column_name }}, '{{ pattern }}')
 
 {% endtest %}

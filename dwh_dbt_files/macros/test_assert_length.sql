@@ -3,7 +3,7 @@
         Macro: assert_length
     # ============================================================================ #
         Purpose : Validates that a column's character length equals the given limit.
-        Logic   : Returns rows where LEN(column_name) != length_limit. dbt marks a test as failed if this query returns any rows.
+        Logic   : Returns rows where LENGTH(column_name) != length_limit. dbt marks a test as failed if this query returns any rows.
 
         Usage on schema.yml:
             models:
@@ -22,5 +22,5 @@
     FROM
         {{ model }}
     WHERE
-        LEN({{ column_name }}) != {{ length_limit }}
+        LENGTH({{ column_name }}) != {{ length_limit }}
 {% endtest %}
