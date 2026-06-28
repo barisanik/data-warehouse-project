@@ -1,0 +1,12 @@
+dwh_dbt_files:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: service-account
+      project: "GCP_PROJECT_ID"
+      dataset: silver                                           # Default dataset. Overridden per model group by generate_schema_name macro.
+      keyfile: "PATH_TO_YOUR_SERVICE_ACCOUNT_KEY.json"
+      location: EU/US                                            # Must match the location selected when creating bronze/silver/gold datasets.
+      threads: 4
+      timeout_seconds: 300
