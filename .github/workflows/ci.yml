@@ -147,10 +147,14 @@ jobs:
           DATASETS_DIR: datasets
 
       - name: Trigger dbt Cloud job
+        env:
+          DBT_API_TOKEN: ${{ secrets.DBT_API_TOKEN }}
+          DBT_ACCOUNT_ID: ${{ secrets.DBT_ACCOUNT_ID }}
+          DBT_JOB_ID: ${{ secrets.DBT_JOB_ID }}
         run: |
           curl -X POST \
             --fail \
-            -H "Authorization: Token ${{ secrets.DBT_API_TOKEN }}" \
+            -H "Authorization: Token $DBT_API_TOKEN" \
             -H "Content-Type: application/json" \
             -d '{"cause": "Triggered by GitHub Actions nightly pipeline"}' \
-            https://cloud.getdbt.com/api/v2/accounts/${{ secrets.DBT_ACCOUNT_ID }}/jobs/${{ secrets.DBT_JOB_ID }}/run/
+            https://cloud.getdbt.com/api/v2/accounts/$DBT_ACCOUNT_ID/jobs/$DBT_JOB_ID/run/
