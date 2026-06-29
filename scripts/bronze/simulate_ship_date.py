@@ -82,17 +82,28 @@ def simulate_ship_date(order_date: pd.Timestamp,
     return order_date + pd.DateOffset(days=total_delay)
 
 def extract(client: bigquery.Client) -> pd.DataFrame:
-    '''Fetches records from the bronze.crm_sales_details.'''
+    '''Fetches sls_ord_num and sls_order_dt from bronze.crm_sales_details for simulation.'''
 
     EXTRACT_SQL = f"""
         SELECT sls_ord_num, sls_order_dt
         FROM `{PROJECT_ID}.bronze.crm_sales_details`
-        WHERE SAFE_CAST(sls_order_dt AS INT64) > 0
     """
     
-    # Get bronze.crm_sales_details table.
     df = client.query(EXTRACT_SQL).to_dataframe()
     logging.info(f"Ingested {len(df)} lines of record.")
+    return df
+
+
+def extract_full(client: bigquery.Client) -> pd.DataFrame:
+    '''Fetches all columns from bronze.crm_sales_details for the WRITE_TRUNCATE reload.'''
+
+    EXTRACT_SQL = f"""
+        SELECT *
+        FROM `{PROJECT_ID}.bronze.crm_sales_details`
+    """
+
+    df = client.query(EXTRACT_SQL).to_dataframe()
+    logging.info(f"Fetched full table: {len(df)} rows.")
     return df
 
 def transform(df: pd.DataFrame, season_config) -> pd.DataFrame:
@@ -126,30 +137,23 @@ def transform(df: pd.DataFrame, season_config) -> pd.DataFrame:
     
     return df
     
-def load(df: pd.DataFrame, client: bigquery.Client) -> None:
-    '''Update sls_ship_dt column values of bronze.crm_sales_details.'''
+def load(full_df: pd.DataFrame, simulated_df: pd.DataFrame, client: bigquery.Client) -> None:
+    '''Merges simulated ship dates into full table and overwrites bronze.crm_sales_details.
+    
+    Avoids DML (MERGE/UPDATE) which is not allowed on BigQuery free tier.
+    Instead: pandas merge and write truncate via load_table_from_dataframe.
+    '''
 
-    # Loads simulated dates to a temp table.
-    temp_table_ref = f"{PROJECT_ID}.bronze.temp_crm_sales_details"
+    # Map simulated_ship_dt back to sls_ship_dt, keyed on sls_ord_num.
+    # Rows without a simulated date (invalid order_dt) keep their original sls_ship_dt.
+    sim_map = simulated_df.drop_duplicates('sls_ord_num').set_index('sls_ord_num')['simulated_ship_dt']
+    full_df['sls_ship_dt'] = full_df['sls_ord_num'].map(sim_map).fillna(full_df['sls_ship_dt'])
+
+    table_ref = f"{PROJECT_ID}.bronze.crm_sales_details"
     job_config = bigquery.LoadJobConfig(write_disposition="WRITE_TRUNCATE")
-    job = client.load_table_from_dataframe(
-        df[['sls_ord_num', 'simulated_ship_dt']], temp_table_ref, job_config=job_config
-    )
+    job = client.load_table_from_dataframe(full_df, table_ref, job_config=job_config)
     job.result()
-    logging.info(f"Temp table temp_crm_sales_details has been created.")
-
-    # Update sls_ship_dt of bronze.crm_sales_details via MERGE.
-    # BigQuery does not support UPDATE with JOIN; MERGE is the equivalent pattern.
-    MERGE_SQL = f"""
-        MERGE `{PROJECT_ID}.bronze.crm_sales_details` AS crm
-        USING `{PROJECT_ID}.bronze.temp_crm_sales_details` AS temp
-        ON crm.sls_ord_num = temp.sls_ord_num
-        WHEN MATCHED THEN
-            UPDATE SET crm.sls_ship_dt = temp.simulated_ship_dt
-    """
-
-    client.query(MERGE_SQL).result()
-    logging.info(f"Updated table bronze.crm_sales_details.")
+    logging.info(f"Overwrote bronze.crm_sales_details with {len(full_df)} rows.")
 
 # --- Main ---
 def main() -> None:
@@ -163,6 +167,7 @@ def main() -> None:
 
         log_event(phase_name="Extraction", log_type="start")
         df = extract(client=client)
+        full_df = extract_full(client=client)
         log_event(phase_name="Extraction", log_type="end")
 
         log_event(phase_name="Transform", log_type="start")
@@ -170,7 +175,7 @@ def main() -> None:
         log_event(phase_name="Transform", log_type="end")
 
         log_event(phase_name="Load", log_type="start")
-        load(df=df, client=client)
+        load(full_df=full_df, simulated_df=df, client=client)
         log_event(phase_name="Load", log_type="end")
 
     except Exception as e:
