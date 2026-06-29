@@ -14,4 +14,11 @@ WORKDIR /dbt
 COPY dwh_dbt_files/ .
 COPY keys/ /keys/
 
+# Creates a restricted user: appuser and gives permission to access on keys and dbt directories.
+RUN useradd -u 8888 appuser && \
+    chown -R appuser:appuser /dbt && \
+    chown -R appuser:appuser /keys
+
+USER appuser
+
 CMD ["/bin/bash", "-c", "dbt deps --profiles-dir /dbt && dbt run --profiles-dir /dbt && dbt test --profiles-dir /dbt"]

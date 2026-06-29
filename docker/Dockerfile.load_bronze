@@ -10,4 +10,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY scripts/bronze/load_bronze_csv_data.py .
 
+# Creates a restricted user and runs bash command with it.
+RUN useradd -u 8888 appuser && chown -R appuser:appuser /app
+USER appuser
+
 CMD ["python", "load_bronze_csv_data.py"]

@@ -11,4 +11,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY scripts/bronze/simulate_ship_date.py .
 COPY tests/ ./tests/
 
+# Creates a restricted user and runs bash command with it.
+RUN useradd -u 8888 appuser && chown -R appuser:appuser /app
+USER appuser
+
 CMD ["bash", "-c", "python -m pytest tests/test_simulate_ship_date.py -v && python simulate_ship_date.py"]
