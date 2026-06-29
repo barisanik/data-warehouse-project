@@ -4,21 +4,20 @@
 #  Purpose: CI pipeline for the data-warehouse-project.
 #
 #  Jobs:
-#    1. python-tests:   Runs unit tests (mocked, no DB required)
-#    2. dbt-parse:      Validates dbt project structure without a DB connecti
+#    1. python-tests:   Runs unit tests (mocked, no DB required).
+#    2. dbt-parse:      Validates dbt project structure without a DB connection.
+#    3. pipeline:       Nightly full run: ingestion → bronze load → dbt Cloud trigger
 #
 #  Trigger conditions:
-#    - Push to main or develop branches.
-#    - Pull request targeting main branch.
+#    - push / pull_request: runs jobs 1 and 2 only.
+#    - schedule (nightly):  runs job 3 only.
 #
-#  Required GitHub Secret:
-#    DBT_CI_PASSWORD:   Any non-empty string. dbt compile does not open a DB connection;
-#                       This secret only satisfies the env_var() call in profiles.yml which has no default value.
-#                       Set it under: Repository -> Settings -> Secrets -> Actions.
+#  Required GitHub Secrets:
+#    DBT_CI_PASSWORD:   Any non-empty string. Satisfies env_var() in profiles.yml.
+#    GCP_SA_KEY:        Full contents of dwh-sa-key.json (GCP service account).
+#    GCP_PROJECT_ID:    GCP project ID string.
+#    DBT_API_TOKEN:     dbt Cloud personal API token. (Can be created via Account Settings -> API Tokens -> Personal tokens)
 #
-#  Out of scope (deferred until cloud migration):
-#    - dbt run / dbt test — requires a live SQL Server instance.
-#                       
 # ============================================================
 
 name: CI
@@ -31,15 +30,18 @@ on:
   pull_request:
     branches:
       - main
+  schedule:
+    - cron: '0 3 * * *'   # Every night at 03:00 UTC
+
 
 jobs:
 
-  # ── Job 1: Python Unit Tests ──────────────────────────────── ''''
-  # Runs mocked unit tests for get_data.py and simulate_ship_date.py.
-  # No database connection is required. All external calls are patched with unittest.mock in the test files.
+  # ── Job 1:   Python Unit Tests   ──────────────────────────────────────────────────
+  # Runs mocked unit tests. No database connection required.
   python-tests:
     name: Python Unit Tests
     runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
 
     steps:
       - name: Checkout repository
@@ -58,15 +60,16 @@ jobs:
           python -m pytest \
             tests/test_get_data.py \
             tests/test_simulate_ship_date.py \
+            tests/test_load_bronze_csv_data.py \
             -v --tb=short
 
 
-  # ── Job 2: dbt Parse Check ────────────────────────────────
-  # Installs dbt-bigquery and parses all models and macros. dbt parse renders every Jinja template and validates model/source references.
-  # No live BigQuery connection is needed — a dummy profiles.yml is created inline.
+  # ── Job 2:   dbt Parse Check   ────────────────────────────────────────────────────
+  # Validates dbt project structure without a live BigQuery connection.
   dbt-parse:
     name: dbt Parse Check
     runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
 
     steps:
       - name: Checkout repository
@@ -105,3 +108,49 @@ jobs:
       - name: Parse dbt project
         working-directory: dwh_dbt_files
         run: dbt parse --profiles-dir .
+
+
+  # ── Job 3:   Trigger dbt Cloud job   ───────────────────────────────────────────────────
+  # Full run: fetches API data -> loads CSVs to bronze -> triggers dbt Cloud job.
+  # Only runs on the nightly schedule, not on push or pull_request.
+  pipeline:
+    name: Trigger dbt Cloud job
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r scripts/requirements.txt
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Run get_data.py
+        run: python scripts/bronze/get_data.py
+        env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Run load_bronze_csv_data.py
+        run: python scripts/bronze/load_bronze_csv_data.py
+        env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          DATASETS_DIR: datasets
+
+      - name: Trigger dbt Cloud job
+        run: |
+          curl -X POST \
+            --fail \
+            -H "Authorization: Token ${{ secrets.DBT_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"cause": "Triggered by GitHub Actions nightly pipeline"}' \
+            https://cloud.getdbt.com/api/v2/accounts/${{ secrets.DBT_ACCOUNT_ID }}/jobs/${{ secrets.DBT_JOB_ID }}/run/
