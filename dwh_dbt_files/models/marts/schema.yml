@@ -69,7 +69,7 @@ models:
               config:
                 severity: error
               arguments:
-                values: ['crm-csv','dummyjson-api']
+                values: ['csv','api']
   - name: dim_products
     description: "Unified product dimension combining ERP CSV and DummyJSON API sources."
     columns:
@@ -148,7 +148,7 @@ models:
               config:
                 severity: error
               arguments:
-                values: ['erp-csv','dummyjson-api']
+                values: ['csv','api']
   - name: fact_sales
     description: "Unified order fact combining product and customer dimensions and silver CRM sales and API order sources."
     columns:
@@ -234,4 +234,4 @@ models:
               config:
                 severity: error
               arguments:
-                values: ['crm-csv','dummyjson-api']
+                values: ['csv','api']
