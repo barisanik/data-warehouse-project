@@ -1,0 +1,13 @@
+# Dockerfile.load_bronze
+# Purpose: Container for load_bronze_csv_data.py. Reads source CSV files and loads them into BigQuery bronze tables.
+
+FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY scripts/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY scripts/bronze/load_bronze_csv_data.py .
+
+CMD ["python", "load_bronze_csv_data.py"]

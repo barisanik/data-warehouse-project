@@ -1,16 +1,17 @@
 # Dockerfile.dbt
-# Purpose: Container for dbt — runs Silver and Gold models against SQL Server.
+# Purpose: Container for dbt. Runs Silver and Gold models against BigQuery.
 
 # dbt deps: installs packages (e.g. dbt-utils) defined in packages.yml
 # dbt run: builds Silver and Gold models
 # dbt test: runs all schema and custom tests
 
-FROM dwh-base:latest
+FROM python:3.11-slim
 
-RUN pip install --no-cache-dir dbt-sqlserver==1.9.2
+RUN pip install --no-cache-dir dbt-bigquery==1.11.3
 
 WORKDIR /dbt
 
 COPY dwh_dbt_files/ .
+COPY keys/ /keys/
 
 CMD ["/bin/bash", "-c", "dbt deps --profiles-dir /dbt && dbt run --profiles-dir /dbt && dbt test --profiles-dir /dbt"]

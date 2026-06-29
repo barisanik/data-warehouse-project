@@ -1,7 +1,7 @@
 # Dockerfile.ingestion
 # Purpose: Container for get_data.py — fetches DummyJSON API data and loads into bronze tables.
 
-FROM dwh-base:latest
+FROM python:3.11-slim
 
 WORKDIR /app
 

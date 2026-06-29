@@ -49,42 +49,58 @@ services:
     command: /bin/bash /scripts/init/setup_db.sh
     restart: on-failure                                  # Retry if SQL Server isn't fully ready yet
 
-  # ── 3. Sales Ship Date Simulation ───────────────────────────
+  # ── 3. Bronze CSV Load ────────────────────────────────────
+  # Reads source CSV files and loads them into BigQuery bronze tables.
+  load_bronze:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.load_bronze
+    env_file: .env
+    environment:
+      DATASETS_DIR: /datasets
+    volumes:
+      - ./datasets:/datasets:ro
+      - ./keys:/keys:ro
+
+  # ── 4. Sales Ship Date Simulation ───────────────────────────
   # Delays sls_ship_dt of bronze.crm_sales_details.
   simulation:
     build:
       context: .
       dockerfile: docker/Dockerfile.simulation
     env_file: .env
+    volumes:
+      - ./keys:/keys:ro
     depends_on:
-      sqlserver-setup:
+      load_bronze:
         condition: service_completed_successfully
 
-  # ── 4. API ingestion ───────────────────────────────────────
+  # ── 5. API ingestion ───────────────────────────────────────
   # Fetches DummyJSON data and loads it into bronze API tables.
   ingestion:
     build:
       context: .
       dockerfile: docker/Dockerfile.ingestion
     env_file: .env
-    depends_on:
-      sqlserver-setup:
-        condition: service_completed_successfully
+    volumes:
+      - ./keys:/keys:ro
 
-  # ── 5. dbt ────────────────────────────────────────────────
+  # ── 6. dbt ────────────────────────────────────────────────
   # Runs Silver and Gold dbt models, then all tests.
   dbt:
     build:
       context: .
       dockerfile: docker/Dockerfile.dbt
     env_file: .env
+    volumes:
+    - ./keys:/keys:ro
     depends_on:
       ingestion:
         condition: service_completed_successfully
       simulation:
         condition: service_completed_successfully
 
-# ── 6. Airflow Metadata DB ────────────────────────────────
+# ── 7. Airflow Metadata DB ────────────────────────────────
   # Stores Airflow state: DAG runs, task results, logs.
   postgres:
     image: postgres:15
@@ -99,7 +115,7 @@ services:
       interval: 10s
       retries: 5
 
-# ── 7. Airflow Init ───────────────────────────────────────
+# ── 8. Airflow Init ───────────────────────────────────────
   # Runs once: migrates Airflow DB and creates admin user, then exits.
   airflow-init:
     image: apache/airflow:2.9.1
@@ -112,7 +128,7 @@ services:
     command: bash -c "airflow db migrate && airflow users create --username $${AIRFLOW_ADMIN_USERNAME} --password $${AIRFLOW_ADMIN_PASSWORD} --firstname Admin --lastname User --role Admin --email $${AIRFLOW_ADMIN_EMAIL}"
     env_file: .env
 
-  # ── 8. Airflow Webserver ──────────────────────────────────
+  # ── 9. Airflow Webserver ──────────────────────────────────
   # Serves the Airflow UI at localhost:8080.
   airflow-webserver:
     build:
@@ -133,7 +149,7 @@ services:
     command: airflow webserver
     env_file: .env
 
-  # ── 9. Airflow Scheduler ─────────────────────────────────
+  # ── 10. Airflow Scheduler ─────────────────────────────────
   # Monitors DAGs and triggers tasks when conditions are met.
   airflow-scheduler:
     build:
@@ -152,7 +168,7 @@ services:
     command: airflow scheduler
     env_file: .env
 
-  # ── 10. Metabase ──────────────────────────────────────────
+  # ── 11. Metabase ──────────────────────────────────────────
   # BI and dashboarding tool. Connects to SQL Server gold layer.
   # UI available at localhost:3000 after startup (~60-90 seconds).
   metabase:
