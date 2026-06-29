@@ -216,3 +216,15 @@ docker compose up -d
 
 This project was built using the following video resource. Although the foundational methodology relies on the video, the data modeling processes were expanded by integrating diverse data sources.
 - [SQL Data Warehouse from Scratch - Data with Baraa](https://youtu.be/9GVqKuTVANE?si=pPUQ8cy8OA3J2cBF)
+
+---
+
+# Kod Kalite Analizi Sonuçları / Code Quality Analysis Results
+
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=barisanik_data-warehouse-project&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=barisanik_data-warehouse-project)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=barisanik_data-warehouse-project&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=barisanik_data-warehouse-project)
+[![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=barisanik_data-warehouse-project&metric=sqale_index)](https://sonarcloud.io/summary/new_code?id=barisanik_data-warehouse-project)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=barisanik_data-warehouse-project&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=barisanik_data-warehouse-project)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=barisanik_data-warehouse-project&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=barisanik_data-warehouse-project)
+
+[![SonarQube Cloud](https://sonarcloud.io/images/project_badges/sonarcloud-highlight.svg)](https://sonarcloud.io/summary/new_code?id=barisanik_data-warehouse-project)
