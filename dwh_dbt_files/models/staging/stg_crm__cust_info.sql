@@ -21,12 +21,23 @@
 WITH source AS (
     SELECT * FROM {{ source('bronze_crm', 'crm_cust_info') }}
 ),
+casted AS (
+    SELECT
+        SAFE_CAST(cst_id AS INT64) AS cst_id
+        ,cst_key
+        ,cst_firstname
+        ,cst_lastname
+        ,cst_marital_status
+        ,cst_gndr
+        ,SAFE_CAST(cst_create_date AS DATE) AS cst_create_date
+    FROM source
+),
 deduplicated AS (
     SELECT
         *
         ,ROW_NUMBER() OVER (PARTITION BY cst_id ORDER BY cst_create_date DESC) AS creation_order
     FROM
-        source
+        casted
     WHERE
         cst_id IS NOT NULL
 ),
