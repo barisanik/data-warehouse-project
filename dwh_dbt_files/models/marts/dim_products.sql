@@ -28,11 +28,11 @@ SELECT
     ,product_name
     ,category_id
     ,CASE
-        WHEN category IS NULL THEN 'n/a'
+        WHEN category IS NULL THEN 'N/A'
         ELSE category
     END AS category
     ,CASE
-        WHEN subcategory IS NULL THEN 'n/a'
+        WHEN subcategory IS NULL THEN 'N/A'
         ELSE subcategory
     END AS subcategory
     ,CASE
