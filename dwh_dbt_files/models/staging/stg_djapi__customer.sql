@@ -25,8 +25,8 @@ WITH source AS (
 cleaned AS(
     SELECT
         CAST(TRIM(REPLACE(id,'dummy-','')) AS INT64) AS id -- Clear prefix.
-        ,IFNULL({{ fn_initcap('first_name') }}, 'n/a') AS first_name
-        ,IFNULL({{ fn_initcap('last_name') }}, 'n/a') AS last_name
+        ,IFNULL({{ fn_initcap("REPLACE(first_name, '\\r', '')") }}, 'n/a') AS first_name
+        ,IFNULL({{ fn_initcap("REPLACE(last_name, '\\r', '')") }}, 'n/a') AS last_name
         ,CASE 
             WHEN (gender IS NULL OR gender = '') THEN 'n/a' -- Replace NULL value or empty string with string 'n/a'.
             WHEN UPPER(TRIM(gender)) IN ('M','MALE') THEN 'Male'

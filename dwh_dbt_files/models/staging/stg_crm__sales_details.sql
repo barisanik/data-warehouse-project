@@ -27,7 +27,7 @@ casted AS (
     SELECT
         sls_ord_num
         ,sls_prd_key
-        ,sls_cust_id
+        ,SAFE_CAST(sls_cust_id AS INT64)    AS sls_cust_id
         ,SAFE_CAST(sls_order_dt AS INT64)   AS sls_order_dt
         ,SAFE_CAST(sls_ship_dt  AS INT64)   AS sls_ship_dt
         ,SAFE_CAST(sls_due_dt   AS INT64)   AS sls_due_dt
