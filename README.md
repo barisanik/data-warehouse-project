@@ -3,40 +3,40 @@
 
 Bu proje; SQL Server üzerinde çalışan, analiz süreçleri için tasarlanmış uçtan uca bir veri ambarı (Data Warehouse) oluşturma sürecini ve buna ait SQL sorgularını içermektedir.
 
-## Kullanılan Teknolojiler
+## Kullanılan Teknolojiler (Main Branch > Cloud)
 
 | Katman | Teknoloji |
 |--------|-----------|
-| Veritabanı | SQL Server 2022 (Docker) |
-| Veri Çekme | Python ([get_data.py](https://github.com/barisanik/data-warehouse-project/blob/main/scripts/bronze/get_data.py)) |
-| Dönüşüm | dbt (Silver + Gold katmanları) |
+| Veritabanı | BigQuery (Google) |
+| Veri Çekme | Python ([get_data.py](https://github.com/barisanik/data-warehouse-project/blob/main/scripts/bronze/get_data.py) & [load_bronze_csv_data.py](https://github.com/barisanik/data-warehouse-project/blob/main/scripts/bronze/load_bronze_csv_data.py)) |
+| Simülasyon | Python ([simulate_ship_date.py](https://github.com/barisanik/data-warehouse-project/blob/main/scripts/bronze/simulate_ship_date.py)) |
+| Dönüşüm | dbt Cloud (Silver + Gold katmanları)|
+| Test | pytest & dbt Cloud |
+| Kod Kalitesi ve Güvenlik | Sonar Cloud |
+| Orkestrasyon | GitHub Actions [ci.yml](https://github.com/barisanik/data-warehouse-project/blob/main/.github/workflows/ci.yml) |
+| Raporlama | Data Studio (Google) |
+
+## Kullanılan Teknolojiler (v1 Branch > Local)
+
+| Katman | Teknoloji |
+|--------|-----------|
+| Veritabanı | SQL Server |
+| Veri Çekme | Python ([get_data.py](https://github.com/barisanik/data-warehouse-project/blob/main/scripts/bronze/get_data.py) & [load_bronze_csv_data.py](https://github.com/barisanik/data-warehouse-project/blob/main/scripts/bronze/load_bronze_csv_data.py)) |
+| Simülasyon | Python ([simulate_ship_date.py](https://github.com/barisanik/data-warehouse-project/blob/main/scripts/bronze/simulate_ship_date.py)) |
+| Dönüşüm | dbt Core (Silver + Gold katmanları)|
+| Test | pytest & dbt Core |
 | Orkestrasyon | Apache Airflow |
 | Container | Docker + Docker Compose |
 | Raporlama | Metabase |
 
 ## Mimari
 
-```
-HAM VERİ KAYNAKLARI
-  ├── ERP CSV dosyaları (ürün kategorileri ve bakım bilgisi, müşteri detayları (doğum tarihi, cinsiyet, konum))
-  └── CRM CSV dosyaları (müşteriler, siparişler, ürünler)
-  └── DummyJSON API (müşteriler, siparişler, ürünler)
-        │
-        ▼
-    BRONZE        Ham veriyi tutar, dönüşüm uygulanmaz.
-        │         bronze.crm_*, bronze.erp_*, bronze.djapi_*
-        ▼
-    SILVER        Temizlenmiş, normalize edilmiş, doğrulanmış verileri içerir. 9 dbt staging modeli + veri kalite testlerini içerir
-        │         silver.stg_crm__*, silver.stg_erp__*, silver.stg_djapi__* 
-        ▼
-      GOLD        Görselleştirme aşamasında kullanılan analitik tabloları içerir.
-                  3 dbt mart modeli: gold.dim_customer, gold.dim_product, gold.fact_sales
-```
+<img width="8477" height="2762" alt="data-architecture-diagram" src="https://github.com/user-attachments/assets/1ea96314-d739-4e6d-b558-d06167fe8011" />
 
 ## Pipeline Akışı
 
 ```
-sqlserver → sqlserver-setup → ingestion → dbt run → dbt test
+ingestion → simulation → dbt run → dbt test
 ```
 
 ## Veri Kaynağı
@@ -49,39 +49,18 @@ Kullanılan API adresleri:
 <img width="10112" height="6096" alt="ER Diagram" src="https://github.com/user-attachments/assets/e7c01ed7-526c-4a9f-af03-64470fd8a24e" />
 
 ## Kurulum
-**Gereksinimler:** Docker Desktop
+**Gereksinimler:** Google Cloud Platform, dbt Cloud
 
 1. Repo'yu klonlayın.
 2. Projenin ana dizininde `.env` dosyasını oluşturun:
-
-```env
-SA_USERNAME=sa
-SA_PASSWORD=<şifre>        # Büyük/küçük harf + rakam + sembol içermeli
-SERVER_NAME=sqlserver
-DATABASE_NAME=DataWarehouse
-DRIVER_NAME=ODBC Driver 18 for SQL Server
-AIRFLOW_ADMIN_USERNAME=admin
-AIRFLOW_ADMIN_PASSWORD=<şifre>
-AIRFLOW_ADMIN_EMAIL=<e-posta>
-```
 .env dosyası örneği için [.env - Sample](https://github.com/barisanik/data-warehouse-project/blob/main/.env%20-%20Sample) dosyasına göz atabilirsiniz.
-
-3. Docker Compose'u çalıştırın:
-
-```bash
-cd docker
-docker compose up -d
-```
-
-**Arayüz Erişim Adresleri & Veritabanı Erişim Bilgileri:**
-
-- Airflow UI: `http://localhost:8080`
-- Metabase UI: `http://localhost:3000`
-- SQL Server: 
-  - Server Name: `localhost,1435`
-  - Authentication: `SQL Server Authentication`
-  - User Name: `sa`
-  - Password: `.env dosyasında yer alan SA_PASSWORD değeri`
+3. GitHub repository ayarları > Secrets and Variables > Actions sekmesinden gerekli değişkenleri tanımlayın:
+   - DBT_ACCOUNT_ID
+   - DBT_API_TOKEN
+   - DBT_CI_PASSWORD
+   - DBT_JOB_ID
+   - GCP_PROJECT_ID
+   - GCP_SA_KEY
 
 ## Proje Kararları
 
@@ -113,40 +92,40 @@ Bu proje aşağıdaki kaynağı referans alarak oluşturulmuştur. Temel metodol
 
 This project showcases an end-to-end data warehousing and analytics solution. It includes SQL scripts for building a data warehouse for analytical purposes on SQL Server.
 
-## Tech Stack
+## Tech Stack (Main Branch > Cloud)
 
 | Layer | Technology |
-|-------|-----------|
-| Database | SQL Server 2022 (Docker) |
-| Ingestion | Python ([get_data.py](https://github.com/barisanik/data-warehouse-project/blob/main/scripts/bronze/get_data.py)) |
-| Transformation | dbt (Silver + Gold layers) |
+|--------|-----------|
+| Database | BigQuery (Google) |
+| Ingestion | Python ([get_data.py](https://github.com/barisanik/data-warehouse-project/blob/main/scripts/bronze/get_data.py) & [load_bronze_csv_data.py](https://github.com/barisanik/data-warehouse-project/blob/main/scripts/bronze/load_bronze_csv_data.py)) |
+| Simulation | Python ([simulate_ship_date.py](https://github.com/barisanik/data-warehouse-project/blob/main/scripts/bronze/simulate_ship_date.py)) |
+| Transformation | dbt Cloud (Silver + Gold layers)|
+| Test | pytest & dbt Cloud |
+| Code Quality and Security | Sonar Cloud |
+| Orchestration | GitHub Actions [ci.yml](https://github.com/barisanik/data-warehouse-project/blob/main/.github/workflows/ci.yml) |
+| Reporting | Data Studio (Google) |
+
+## Tech Stack (v1 Branch > Local)
+
+| Layer | Technology |
+|--------|-----------|
+| Database | SQL Server |
+| Ingestion | Python ([get_data.py](https://github.com/barisanik/data-warehouse-project/blob/main/scripts/bronze/get_data.py) & [load_bronze_csv_data.py](https://github.com/barisanik/data-warehouse-project/blob/main/scripts/bronze/load_bronze_csv_data.py)) |
+| Simulation | Python ([simulate_ship_date.py](https://github.com/barisanik/data-warehouse-project/blob/main/scripts/bronze/simulate_ship_date.py)) |
+| Transformation | dbt Core (Silver + Gold layers)|
+| Test | pytest & dbt Core |
 | Orchestration | Apache Airflow |
-| Containers | Docker + Docker Compose |
+| Container | Docker + Docker Compose |
 | Reporting | Metabase |
 
 ## Architecture
 
-```
-RAW SOURCES
-  ├── ERP CSV files (product categories and maintenance details, customer details (birthdate, gender and location))
-  └── CRM CSV files (customers, order details, products)
-  └── DummyJSON API (customers, order details, products)
-        │
-        ▼
-    BRONZE        Keeps only raw records. No transformation
-        │         bronze.crm_*, bronze.erp_*, bronze.djapi_*
-        ▼
-    SILVER        Cleaned, normalized and validated records. Includes 9 dbt models and data quality tests.
-        │         silver.stg_crm__*, silver.stg_erp__*, silver.stg_djapi__* 
-        ▼
-      GOLD        Stores analytic tables for visualization.
-                  3 dbt mart models: gold.dim_customer, gold.dim_product, gold.fact_sales
-```
+<img width="8477" height="2762" alt="data-architecture-diagram" src="https://github.com/user-attachments/assets/1ea96314-d739-4e6d-b558-d06167fe8011" />
 
 ## Pipeline Flow
 
 ```
-sqlserver → sqlserver-setup → ingestion → dbt run → dbt test
+ingestion → simulation → dbt run → dbt test
 ```
 
 ## Data Source
@@ -159,39 +138,17 @@ API endpoints used:
 <img width="10112" height="6096" alt="ER Diagram" src="https://github.com/user-attachments/assets/e7c01ed7-526c-4a9f-af03-64470fd8a24e" />
 
 ## Initialization
-**Requirements:** Docker Desktop
+**Requirements:** Google Cloud Platform, dbt Cloud
 
 1. Clone this repo.
 2. Create a `.env` file in the project root:
-
-```env
-SA_USERNAME=sa
-SA_PASSWORD=<password>        # Must contain uppercase + lowercase + digit + symbol
-SERVER_NAME=sqlserver
-DATABASE_NAME=DataWarehouse
-DRIVER_NAME=ODBC Driver 18 for SQL Server
-AIRFLOW_ADMIN_USERNAME=admin
-AIRFLOW_ADMIN_PASSWORD=<password>
-AIRFLOW_ADMIN_EMAIL=<email>
-```
-Please see [.env - Sample](https://github.com/barisanik/data-warehouse-project/blob/main/.env%20-%20Sample) file for a sample file structure.
-
-3. Run Docker Compose:
-
-```bash
-cd docker
-docker compose up -d
-```
-
-**UI Addresses and SQL Connection Details:**
-
-- Airflow UI: `http://localhost:8080`
-- Metabase UI: `http://localhost:3000`
-- SQL Server: 
-  - Server Name: `localhost,1435`
-  - Authentication: `SQL Server Authentication`
-  - User Name: `sa`
-  - Password: `SA_PASSWORD value from .env file.`
+3. Define repository secrets via GitHub repository settings > Secrets and Variables > Actions:
+   - DBT_ACCOUNT_ID
+   - DBT_API_TOKEN
+   - DBT_CI_PASSWORD
+   - DBT_JOB_ID
+   - GCP_PROJECT_ID
+   - GCP_SA_KEY
 
 ## Project Decisions
 
