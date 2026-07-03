@@ -58,7 +58,7 @@ FROM(
     FROM
         {{ ref('stg_crm__sales_details') }} sd
         JOIN {{ ref('dim_products') }} pr ON sd.sls_prd_key = pr.product_number
-        JOIN {{ ref('dim_customers') }} cu ON sd.sls_cust_id = REPLACE(cu.customer_id,'CSV-','') AND cu.data_source = 'csv'
+        JOIN {{ ref('dim_customers') }} cu ON CAST(sd.sls_cust_id AS STRING) = REPLACE(cu.customer_id,'CSV-','') AND cu.data_source = 'csv'
 
     UNION ALL
 
