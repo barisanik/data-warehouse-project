@@ -9,8 +9,8 @@
 #    3. pipeline:       Nightly full run: ingestion → bronze load → dbt Cloud trigger
 #
 #  Trigger conditions:
-#    - push / pull_request: runs jobs 1 and 2 only.
-#    - schedule (nightly):  runs job 3 only.
+#    - push / pull_request:            runs jobs 1 and 2 only.
+#    - schedule (nightly) / manual dispatch: runs job 3 only (full data refresh + dbt Cloud trigger).
 #
 #  Required GitHub Secrets:
 #    DBT_CI_PASSWORD:   Any non-empty string. Satisfies env_var() in profiles.yml.
@@ -32,6 +32,7 @@ on:
       - main
   schedule:
     - cron: '0 3 * * *'   # Every night at 03:00 UTC
+  workflow_dispatch:      # Allows manual trigger of the full pipeline job from the Actions tab, API or GitHub CLI.
 
 
 jobs:
@@ -116,7 +117,7 @@ jobs:
   pipeline:
     name: Trigger dbt Cloud job
     runs-on: ubuntu-latest
-    if: github.event_name == 'schedule'
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
 
     steps:
       - name: Checkout repository
