@@ -56,6 +56,7 @@ Kullanılan API adresleri:
 .env dosyası örneği için [.env - Sample](https://github.com/barisanik/data-warehouse-project/blob/main/.env%20-%20Sample) dosyasına göz atabilirsiniz.
 3. GitHub repository ayarları > Secrets and Variables > Actions sekmesinden gerekli değişkenleri tanımlayın:
    - DBT_ACCOUNT_ID
+   - DBT_ACCESS_URL
    - DBT_API_TOKEN
    - DBT_CI_PASSWORD
    - DBT_JOB_ID
@@ -144,6 +145,7 @@ API endpoints used:
 2. Create a `.env` file in the project root:
 3. Define repository secrets via GitHub repository settings > Secrets and Variables > Actions:
    - DBT_ACCOUNT_ID
+   - DBT_ACCESS_URL
    - DBT_API_TOKEN
    - DBT_CI_PASSWORD
    - DBT_JOB_ID

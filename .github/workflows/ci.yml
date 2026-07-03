@@ -17,6 +17,7 @@
 #    GCP_SA_KEY:        Full contents of dwh-sa-key.json (GCP service account).
 #    GCP_PROJECT_ID:    GCP project ID string.
 #    DBT_API_TOKEN:     dbt Cloud personal API token. (Can be created via Account Settings -> API Tokens -> Personal tokens)
+#    DBT_ACCESS_URL:    Account-specific API host, e.g. "abc123.us1.dbt.com". Please find it in dbt Cloud > Account Settings > Access URLs.
 #
 # ============================================================
 
@@ -157,10 +158,11 @@ jobs:
           DBT_API_TOKEN: ${{ secrets.DBT_API_TOKEN }}
           DBT_ACCOUNT_ID: ${{ secrets.DBT_ACCOUNT_ID }}
           DBT_JOB_ID: ${{ secrets.DBT_JOB_ID }}
+          DBT_ACCESS_URL: ${{ secrets.DBT_ACCESS_URL }}
         run: |
           curl -X POST \
             --fail \
             -H "Authorization: Token $DBT_API_TOKEN" \
             -H "Content-Type: application/json" \
             -d '{"cause": "Triggered by GitHub Actions nightly pipeline"}' \
-            https://cloud.getdbt.com/api/v2/accounts/$DBT_ACCOUNT_ID/jobs/$DBT_JOB_ID/run/
+            "https://${DBT_ACCESS_URL}/api/v2/accounts/$DBT_ACCOUNT_ID/jobs/$DBT_JOB_ID/run/"
