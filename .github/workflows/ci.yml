@@ -146,6 +146,11 @@ jobs:
           GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
           DATASETS_DIR: datasets
 
+      - name: Run simulate_ship_date.py
+        run: python scripts/bronze/simulate_ship_date.py
+        env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+
       - name: Trigger dbt Cloud job
         env:
           DBT_API_TOKEN: ${{ secrets.DBT_API_TOKEN }}
