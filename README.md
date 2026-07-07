@@ -8,12 +8,12 @@ Bu proje; SQL Server üzerinde çalışan, analiz süreçleri için tasarlanmı�
 | Katman | Teknoloji |
 |--------|-----------|
 | Veritabanı | BigQuery (Google) |
-| Veri Çekme | Python ([get_data.py](https://github.com/barisanik/data-warehouse-project/blob/main/scripts/bronze/get_data.py) & [load_bronze_csv_data.py](https://github.com/barisanik/data-warehouse-project/blob/main/scripts/bronze/load_bronze_csv_data.py)) |
-| Simülasyon | Python ([simulate_ship_date.py](https://github.com/barisanik/data-warehouse-project/blob/main/scripts/bronze/simulate_ship_date.py)) |
+| Veri Çekme | Python ([get_data.py](https://github.com/barisanik/data-warehouse-project/blob/v2_cloud/scripts/bronze/get_data.py) & [load_bronze_csv_data.py](https://github.com/barisanik/data-warehouse-project/blob/v2_cloud/scripts/bronze/load_bronze_csv_data.py)) |
+| Simülasyon | Python ([simulate_ship_date.py](https://github.com/barisanik/data-warehouse-project/blob/v2_cloud/scripts/bronze/simulate_ship_date.py)) |
 | Dönüşüm | dbt Cloud (Silver + Gold katmanları)|
 | Test | pytest & dbt Cloud |
 | Kod Kalitesi ve Güvenlik | Sonar Cloud |
-| Orkestrasyon | GitHub Actions [ci.yml](https://github.com/barisanik/data-warehouse-project/blob/main/.github/workflows/ci.yml) |
+| Orkestrasyon | GitHub Actions [ci.yml](https://github.com/barisanik/data-warehouse-project/blob/v2_cloud/.github/workflows/ci.yml) |
 | Raporlama | Data Studio (Google) |
 
 ## Kullanılan Teknolojiler (v1 Branch > Local)
@@ -21,8 +21,8 @@ Bu proje; SQL Server üzerinde çalışan, analiz süreçleri için tasarlanmı�
 | Katman | Teknoloji |
 |--------|-----------|
 | Veritabanı | SQL Server |
-| Veri Çekme | Python ([get_data.py](https://github.com/barisanik/data-warehouse-project/blob/main/scripts/bronze/get_data.py) & [load_bronze_csv_data.py](https://github.com/barisanik/data-warehouse-project/blob/main/scripts/bronze/load_bronze_csv_data.py)) |
-| Simülasyon | Python ([simulate_ship_date.py](https://github.com/barisanik/data-warehouse-project/blob/main/scripts/bronze/simulate_ship_date.py)) |
+| Veri Çekme | Python ([get_data.py](https://github.com/barisanik/data-warehouse-project/blob/v2_cloud/scripts/bronze/get_data.py) & [load_bronze_csv_data.py](https://github.com/barisanik/data-warehouse-project/blob/v2_cloud/scripts/bronze/load_bronze_csv_data.py)) |
+| Simülasyon | Python ([simulate_ship_date.py](https://github.com/barisanik/data-warehouse-project/blob/v2_cloud/scripts/bronze/simulate_ship_date.py)) |
 | Dönüşüm | dbt Core (Silver + Gold katmanları)|
 | Test | pytest & dbt Core |
 | Orkestrasyon | Apache Airflow |
@@ -41,7 +41,7 @@ ingestion → simulation → dbt run → dbt test
 
 ## Veri Kaynağı
 
-Projede kullanılan CSV dosyaları [datasets](https://github.com/barisanik/data-warehouse-project/tree/main/datasets) dizini altında yer almaktadır.
+Projede kullanılan CSV dosyaları [datasets](https://github.com/barisanik/data-warehouse-project/tree/v2_cloud/datasets) dizini altında yer almaktadır.
 Kullanılan API adresleri:
 - [Dummy JSON - Products](https://dummyjson.com/products?limit=1000)
 - [Dummy JSON - Users](https://dummyjson.com/user?limit=10000)
@@ -53,7 +53,7 @@ Kullanılan API adresleri:
 
 1. Repo'yu klonlayın.
 2. Projenin ana dizininde `.env` dosyasını oluşturun:
-.env dosyası örneği için [.env - Sample](https://github.com/barisanik/data-warehouse-project/blob/main/.env%20-%20Sample) dosyasına göz atabilirsiniz.
+.env dosyası örneği için [.env - Sample](https://github.com/barisanik/data-warehouse-project/blob/v2_cloud/.env%20-%20Sample) dosyasına göz atabilirsiniz.
 3. GitHub repository ayarları > Secrets and Variables > Actions sekmesinden gerekli değişkenleri tanımlayın:
    - DBT_ACCOUNT_ID
    - DBT_ACCESS_URL
@@ -98,12 +98,12 @@ This project showcases an end-to-end data warehousing and analytics solution. It
 | Layer | Technology |
 |--------|-----------|
 | Database | BigQuery (Google) |
-| Ingestion | Python ([get_data.py](https://github.com/barisanik/data-warehouse-project/blob/main/scripts/bronze/get_data.py) & [load_bronze_csv_data.py](https://github.com/barisanik/data-warehouse-project/blob/main/scripts/bronze/load_bronze_csv_data.py)) |
-| Simulation | Python ([simulate_ship_date.py](https://github.com/barisanik/data-warehouse-project/blob/main/scripts/bronze/simulate_ship_date.py)) |
+| Ingestion | Python ([get_data.py](https://github.com/barisanik/data-warehouse-project/blob/v2_cloud/scripts/bronze/get_data.py) & [load_bronze_csv_data.py](https://github.com/barisanik/data-warehouse-project/blob/v2_cloud/scripts/bronze/load_bronze_csv_data.py)) |
+| Simulation | Python ([simulate_ship_date.py](https://github.com/barisanik/data-warehouse-project/blob/v2_cloud/scripts/bronze/simulate_ship_date.py)) |
 | Transformation | dbt Cloud (Silver + Gold layers)|
 | Test | pytest & dbt Cloud |
 | Code Quality and Security | Sonar Cloud |
-| Orchestration | GitHub Actions [ci.yml](https://github.com/barisanik/data-warehouse-project/blob/main/.github/workflows/ci.yml) |
+| Orchestration | GitHub Actions [ci.yml](https://github.com/barisanik/data-warehouse-project/blob/v2_cloud/.github/workflows/ci.yml) |
 | Reporting | Data Studio (Google) |
 
 ## Tech Stack (v1 Branch > Local)
@@ -111,8 +111,8 @@ This project showcases an end-to-end data warehousing and analytics solution. It
 | Layer | Technology |
 |--------|-----------|
 | Database | SQL Server |
-| Ingestion | Python ([get_data.py](https://github.com/barisanik/data-warehouse-project/blob/main/scripts/bronze/get_data.py) & [load_bronze_csv_data.py](https://github.com/barisanik/data-warehouse-project/blob/main/scripts/bronze/load_bronze_csv_data.py)) |
-| Simulation | Python ([simulate_ship_date.py](https://github.com/barisanik/data-warehouse-project/blob/main/scripts/bronze/simulate_ship_date.py)) |
+| Ingestion | Python ([get_data.py](https://github.com/barisanik/data-warehouse-project/blob/v2_cloud/scripts/bronze/get_data.py) & [load_bronze_csv_data.py](https://github.com/barisanik/data-warehouse-project/blob/v2_cloud/scripts/bronze/load_bronze_csv_data.py)) |
+| Simulation | Python ([simulate_ship_date.py](https://github.com/barisanik/data-warehouse-project/blob/v2_cloud/scripts/bronze/simulate_ship_date.py)) |
 | Transformation | dbt Core (Silver + Gold layers)|
 | Test | pytest & dbt Core |
 | Orchestration | Apache Airflow |
@@ -131,7 +131,7 @@ ingestion → simulation → dbt run → dbt test
 
 ## Data Source
 
-CSV files used in this project can be found under the [datasets](https://github.com/barisanik/data-warehouse-project/tree/main/datasets) directory.
+CSV files used in this project can be found under the [datasets](https://github.com/barisanik/data-warehouse-project/tree/v2_cloud/datasets) directory.
 API endpoints used:
 - [Dummy JSON - Products](https://dummyjson.com/products?limit=1000)
 - [Dummy JSON - Users](https://dummyjson.com/user?limit=10000)
