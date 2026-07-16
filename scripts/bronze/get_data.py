@@ -71,6 +71,23 @@ ORDER_CONFIG = IngestConfig(
     ],
 )
 
+# Ground truth table: Stores the pre-corruption state of each corruption-candidate for data quality dashboard.
+GROUND_TRUTH_CONFIG = IngestConfig(
+    url="",
+    data_type="ground_truth",
+    main_tag="",
+    table="dq.dq_ground_truth",
+    # All columns STRING, matching the bronze convention
+    bq_schema=[
+        bigquery.SchemaField("data_type",        "STRING"),
+        bigquery.SchemaField("record_id",        "STRING"),
+        bigquery.SchemaField("field_name",       "STRING"),
+        bigquery.SchemaField("corruption_type",  "STRING"),
+        bigquery.SchemaField("is_corrupted",     "STRING"),
+        bigquery.SchemaField("ingestion_run_at", "STRING"),
+    ],
+)
+
 
 ### Initial parameters ###
 # Data corruption parameters
@@ -110,6 +127,35 @@ def extract(config: IngestConfig, rate: float) -> list[dict]:
                 processed_records.append(corrupted)
 
         return processed_records
+
+    except requests.RequestException as e:
+        logging.error(f"API fetch failed for {config.table}: {e}")
+        raise
+
+
+def extract_with_ground_truth(config: IngestConfig, rate: float, run_timestamp: datetime) -> tuple[list[dict], list[dict]]:
+    """Same as extract(), but additionally builds ground-truth rows by diffing each record against its pre-corruption state.
+
+    Kept as a separate function from extract() on purpose: This function only observes corrupt_record()'s output (a value-level
+    diff), it does not consume random numbers itself, so the existing corruption sequence is not affected by adding ground truth.
+    """
+    try:
+        processed_records = []
+        ground_truth_rows = []
+        records = fetch_data(config.url, config.main_tag)
+
+        for record in records:
+            flat = flatten_data(config.data_type, record)
+            rows = flat if isinstance(flat, list) else [flat]
+
+            for row in rows:
+                corrupted = corrupt_record(row, rate)
+                processed_records.append(corrupted)
+                ground_truth_rows.extend(
+                    build_ground_truth_rows(config.data_type, row, corrupted, run_timestamp)
+                )
+
+        return processed_records, ground_truth_rows
 
     except requests.RequestException as e:
         logging.error(f"API fetch failed for {config.table}: {e}")
@@ -244,6 +290,20 @@ CORRUPTORS = {
     "total_price": corrupt_price,
 }
 
+# Maps each corruption-candidate field to its corruption category for data quality dashboard.
+FIELD_CORRUPTION_TYPE = {
+    "id":          "id",
+    "cust_id":     "id",
+    "prd_id":      "id",
+    "title":       "string",
+    "category":    "string",
+    "first_name":  "string",
+    "last_name":   "string",
+    "gender":      "string",
+    "pkey":        "key",
+    "total_price": "price",
+}
+
 
 def corruption_possibility(field: str, value, rate: float):
     """Decides whether to corrupt a field and returns the original or corrupted value."""
@@ -258,6 +318,40 @@ def corrupt_record(record: dict, rate: float) -> dict:
     return {k: corruption_possibility(k, v, rate) for k, v in record.items()}
 
 
+def build_record_key(data_type: str, original_row: dict) -> str:
+    """Builds a stable identifier from PRE-corruption values.
+    Orders need id + prd_id since one order (cart) can yield multiple rows,
+    one per product in the cart.
+    """
+    if data_type == "order":
+        return f"{original_row['id']}_{original_row['prd_id']}"
+    return str(original_row["id"])
+
+
+def build_ground_truth_rows(data_type: str, original_row: dict, corrupted_row: dict, run_timestamp: datetime) -> list[dict]:
+    """Compares a clean row against its corrupted counterpart and produces one ground-truth row per corruption-candidate field present in the row."""
+    record_key = build_record_key(data_type, original_row)
+    rows = []
+
+    for field, corruption_type in FIELD_CORRUPTION_TYPE.items():
+        if field not in original_row:
+            continue  # Field doesn't apply to this data_type.
+
+        original_value = str(original_row[field])
+        corrupted_value = str(corrupted_row[field])
+
+        rows.append({
+            "data_type":        data_type,
+            "record_id":        record_key,
+            "field_name":       field,
+            "corruption_type":  corruption_type,
+            "is_corrupted":     original_value != corrupted_value,
+            "ingestion_run_at": run_timestamp,
+        })
+
+    return rows
+
+
 # --- Main ---
 def main():
     script_start_time = datetime.now()
@@ -267,9 +361,16 @@ def main():
         client = get_client()
         logging.info("BigQuery client initialized.")
 
+        all_ground_truth_rows = []
+
         for config in [PRODUCT_CONFIG, USER_CONFIG, ORDER_CONFIG]:
-            records = extract(config=config, rate=CORRUPTION_RATE)
+            records, ground_truth_rows = extract_with_ground_truth(
+                config=config, rate=CORRUPTION_RATE, run_timestamp=script_start_time
+            )
             load(config=config, records=records, client=client)
+            all_ground_truth_rows.extend(ground_truth_rows)
+
+        load(config=GROUND_TRUTH_CONFIG, records=all_ground_truth_rows, client=client)
 
     except Exception as e:
         logging.critical(f"Script failed: {e}")
