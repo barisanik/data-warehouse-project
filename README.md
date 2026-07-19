@@ -187,3 +187,6 @@ This project was built using the following video resource. Although the foundati
 [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=barisanik_data-warehouse-project&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=barisanik_data-warehouse-project)
 
 [![SonarQube Cloud](https://sonarcloud.io/images/project_badges/sonarcloud-highlight.svg)](https://sonarcloud.io/summary/new_code?id=barisanik_data-warehouse-project)
+
+# CI Sonucu / CI Result
+[![CI](https://github.com/barisanik/data-warehouse-project/actions/workflows/ci.yml/badge.svg)](https://github.com/barisanik/data-warehouse-project/actions/workflows/ci.yml)
